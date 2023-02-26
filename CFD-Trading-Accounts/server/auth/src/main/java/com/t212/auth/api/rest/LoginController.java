@@ -23,7 +23,7 @@ public class LoginController {
     public ResponseEntity<ApiResponse> authenticate(
             @RequestBody LoginInput request
     ) {
-        if (request != null && request.password != null && request.username != null) {
+        if (request != null && request.password() != null && request.username() != null) {
             UserOutput user = loginService.findUserByUsernameAndPassword(request);
             if (user != null) {
                 return ResponseEntity.status(200).body(new ApiResponse(200, "", user));

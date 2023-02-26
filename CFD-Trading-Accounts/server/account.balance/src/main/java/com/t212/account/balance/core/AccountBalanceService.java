@@ -30,7 +30,7 @@ public class AccountBalanceService {
             @Override
             protected void doInTransactionWithoutResult(TransactionStatus status) {
                 AccountCashDAO currentBalance = accountCashRepository.getById(userId);
-                if (currentBalance.balance.compareTo(amount) >= 0) {
+                if (currentBalance.balance().compareTo(amount) >= 0) {
                     balance[0] = accountCashRepository.withdraw(amount, userId);
                 }
             }

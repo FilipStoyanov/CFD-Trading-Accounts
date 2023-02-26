@@ -1,11 +1,4 @@
 package com.t212.auth.api.rest.models;
 
-public class LoginInput {
-    public final String username;
-    public final String password;
-
-    public LoginInput(String username, String password) {
-        this.username = username;
-        this.password = password;
-    }
+public record LoginInput(String username, String password) {
 }

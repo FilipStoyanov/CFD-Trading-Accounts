@@ -17,8 +17,8 @@ public class LoginService {
 
     public UserOutput findUserByUsernameAndPassword(LoginInput loginCredentials) {
 
-        final UserDAO user = userRepository.getUserByUsernameAndPassword(loginCredentials.username, loginCredentials.password);
-        boolean isValidPassword = BCrypt.checkpw(loginCredentials.password, user.passwordHash);
+        final UserDAO user = userRepository.getUserByUsernameAndPassword(loginCredentials.username(), loginCredentials.password());
+        boolean isValidPassword = BCrypt.checkpw(loginCredentials.password(), user.passwordHash());
         if (isValidPassword) {
             return Mappers.fromResultSetToUserOutput(user);
         }

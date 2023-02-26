@@ -30,23 +30,6 @@ function App() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [cookies, setCookie, removeCookies] = useCookies();
-  const { pathname } = useLocation();
-
-  const isMerchantOrAdmin = () => {
-    return (
-      cookies.secure &&
-      user &&
-      (user.role === "MERCHANT" || user.role === "ADMIN")
-    );
-  };
-
-  const isAdmin = () => {
-    return cookies.secure && user && user.role === "ADMIN";
-  };
-
-  const isMerchant = () => {
-    return cookies.secure && user && user.role === "MERCHANT";
-  };
 
   const getUser = async () => {
     let userId = localStorage.getItem("user");

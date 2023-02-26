@@ -51,7 +51,7 @@ public class MariaDBPositionRepository implements AccountPositionRepository {
     }
 
     @Override
-    public AccountPositionDAO getUpdatedPositionById(long userId, long instrumentId, String type) {
+    public AccountPositionDAO getUpdatedPositionById(long userId, long instrumentId, String type) throws EmptyResultDataAccessException {
         return jdbc.queryForObject(PositionsQueries.GET_UPDATED_POSITION_BY_ID, (rs, rowNum) -> fromResultSetToPosition(rs), userId, instrumentId, type);
     }
 

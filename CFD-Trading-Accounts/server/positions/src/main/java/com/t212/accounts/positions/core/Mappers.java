@@ -5,11 +5,10 @@ import com.t212.accounts.positions.core.models.Position;
 import com.t212.accounts.positions.core.models.PositionWithPrices;
 import com.t212.accounts.positions.repositories.models.AccountPositionDAO;
 import com.t212.accounts.positions.repositories.models.AccountPositionsWithPricesDAO;
-import org.apache.kafka.common.quota.ClientQuotaAlteration;
 
 public class Mappers {
     public static Position fromResultSetToPosition(AccountPositionDAO position) {
-        return new Position(position.userId, position.ticker, position.quantity, position.type, position.buyPrice, position.sellPrice,
+        return new Position(position.ticker, position.quantity, position.type, position.buyPrice, position.sellPrice,
                 position.isClosed, position.createdAt, position.updatedAt);
     }
 

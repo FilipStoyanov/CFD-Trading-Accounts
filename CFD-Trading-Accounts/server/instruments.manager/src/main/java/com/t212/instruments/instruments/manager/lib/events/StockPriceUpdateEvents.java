@@ -7,12 +7,8 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Objects;
 
-public class StockPriceUpdateEvents implements Serializable {
-    public final String ticker;
-    public final BigDecimal bid;
-    public final BigDecimal ask;
-    public final Long timestamp;
-
+public record StockPriceUpdateEvents(String ticker, BigDecimal bid, BigDecimal ask,
+                                     Long timestamp) implements Serializable {
     @JsonCreator
     public StockPriceUpdateEvents(
             @JsonProperty("ticker") String ticker,
@@ -34,11 +30,6 @@ public class StockPriceUpdateEvents implements Serializable {
                 Objects.equals(this.bid, that.bid) &&
                 Objects.equals(this.ask, that.ask) &&
                 Objects.equals(this.timestamp, that.timestamp);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(this.ticker, this.bid, this.ask, this.timestamp);
     }
 
     @Override

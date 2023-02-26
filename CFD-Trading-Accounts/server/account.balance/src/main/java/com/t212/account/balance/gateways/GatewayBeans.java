@@ -1,6 +1,6 @@
 package com.t212.account.balance.gateways;
 
-import com.t212.account.balance.lib.events.AccountBalanceUpdaterEvent;
+import com.t212.account.balance.events.AccountBalanceUpdaterEvent;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

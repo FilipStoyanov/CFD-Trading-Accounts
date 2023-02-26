@@ -24,7 +24,7 @@ public class InstrumentController {
 
     @PostMapping
     public ResponseEntity<ApiResponse> addInstrument(@RequestBody InstrumentInput instrument) {
-        Instrument createdInstrument = instrumentService.addInstrument(instrument.name, instrument.fullname, instrument.quantity, instrument.leverage, instrument.marketName);
+        Instrument createdInstrument = instrumentService.addInstrument(instrument.name(), instrument.fullname(), instrument.quantity(), instrument.leverage(), instrument.marketName());
         return ResponseEntity.status(201).body(new ApiResponse(201, "", createdInstrument));
     }
 

@@ -1,4 +1,4 @@
-package com.t212.account.balance.lib.events;
+package com.t212.account.balance.events;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -7,11 +7,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Objects;
 
-public class AccountBalanceUpdaterEvent implements Serializable {
-    public final long userId;
-    public final BigDecimal balance;
-    public final Long timestamp;
-
+public record AccountBalanceUpdaterEvent(long userId, BigDecimal balance, Long timestamp) implements Serializable {
     @JsonCreator
     public AccountBalanceUpdaterEvent(
             @JsonProperty("userId") long userId,
@@ -30,11 +26,6 @@ public class AccountBalanceUpdaterEvent implements Serializable {
         return Objects.equals(this.userId, that.userId) &&
                 Objects.equals(this.balance, that.balance) &&
                 Objects.equals(this.timestamp, that.timestamp);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(this.userId, this.balance, this.timestamp);
     }
 
     @Override

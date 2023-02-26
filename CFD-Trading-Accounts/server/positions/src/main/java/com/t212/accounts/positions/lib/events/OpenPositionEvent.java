@@ -7,15 +7,8 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Objects;
 
-public class OpenPositionEvent implements Serializable {
-    public final long userId;
-    public final String ticker;
-    public final String positionType;
-    public final BigDecimal quantity;
-    public final BigDecimal buyPrice;
-    public final BigDecimal sellPrice;
-    public final Long timestamp;
-
+public record OpenPositionEvent(long userId, String ticker, String positionType, BigDecimal quantity,
+                                BigDecimal buyPrice, BigDecimal sellPrice, Long timestamp) implements Serializable {
     @JsonCreator
     public OpenPositionEvent(
             @JsonProperty("userId") long userId,
@@ -48,8 +41,4 @@ public class OpenPositionEvent implements Serializable {
                 Objects.equals(this.timestamp, that.timestamp);
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(this.userId, this.ticker, this.positionType, this.quantity, this.buyPrice, this.sellPrice, this.timestamp);
-    }
 }

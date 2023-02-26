@@ -21,7 +21,7 @@ public class AccountBalanceListener {
             groupId = "cfd_account_balance_updates",
             containerFactory = "accountBalanceUpdatedContainerFactory")
     void listenForAccountBalanceUpdate(AccountBalanceUpdaterEvent data) {
-        accountBalanceEvents.put(data.userId, data);
+        accountBalanceEvents.put(data.userId(), data);
     }
 
     public Map<Long, AccountBalanceUpdaterEvent> getAccountBalanceEvents() {

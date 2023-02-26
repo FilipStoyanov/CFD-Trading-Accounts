@@ -40,6 +40,7 @@ create table if not exists `instruments` (
 );
 
 create table if not exists `account_positions` (
+    id int not null auto_increment,
     user_id int not null,
     instrument_id int not null,
     quantity decimal(10,2) not null,
@@ -50,7 +51,7 @@ create table if not exists `account_positions` (
 	created_at datetime default current_timestamp,
     updated_at datetime default current_timestamp,
     deleted_at datetime default current_timestamp,
-    constraint PK_ACCOUNT_POSITIONS primary key(user_id, instrument_id, type),
+    constraint PK_ACCOUNT_POSITIONS primary key(id),
     constraint FK_POSITION_TO_USER foreign key(user_id) references users(id) on delete cascade,
     constraint FK_POSITION_TO_INSTRUMENT foreign key(instrument_id) references instruments(id) on delete cascade
 );

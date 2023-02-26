@@ -4,6 +4,9 @@ import { useNavigate } from "react-router-dom";
 import LinearProgressWithLabel from "../../components/progress-bar/LinearProgressWithLabel";
 import { useCookies } from "react-cookie";
 import AlarmAddOutlinedIcon from "@mui/icons-material/AlarmAddOutlined";
+import { useSelector } from "react-redux";
+import { sum, calculateStatus } from "../../utils";
+import Header from "../../components/header/Header";
 import {
   Grid,
   Typography,
@@ -13,9 +16,9 @@ import {
   Modal,
   Button,
 } from "@mui/material";
-import { openWebsocketConnection } from "../../requests";
+import { fetchAccountBalance, openWebsocketConnection } from "../../requests";
 import InstrumentCard from "../../components/instrument-card/InstrumentCard";
-import { styled } from '@mui/material/styles';
+import { styled } from "@mui/material/styles";
 import { Stomp } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 import Loading from "../../components/loading/Loading";
@@ -31,12 +34,13 @@ import {
 
 const MARGIN_CALL_PERCENTAGE = 45;
 const StyledIconButton = styled(IconButton)(({ theme }) => ({
-  '&:hover': {
-    backgroundColor: 'transparent',
+  "&:hover": {
+    backgroundColor: "transparent",
   },
 }));
 const StockMarket = ({}) => {
   const navigate = useNavigate();
+  const user = useSelector((state) => state.user.user);
   const [cookies, setCookie, removeCookies] = useCookies();
   const [instruments, setInstruments] = useState([]);
   const [openPositions, setOpenPositions] = useState([]);
@@ -69,23 +73,35 @@ const StockMarket = ({}) => {
       setOpenFirstTime(true);
     }
     if (sessionStorage.getItem("marginCall") && status > 45) {
-        sessionStorage.clear();
-        setOpenFirstTime(false);
+      sessionStorage.clear();
+      setOpenFirstTime(false);
     }
-  }
+  };
 
-  const addDataToChart = (currentChartInstrument) => {
-    if(Date.now() % 5 === 0) {
-      setChartData((prevData) => [
-        ...prevData,
-        {
-          time: new Date().toLocaleTimeString(),
-          sell: currentChartInstrument.sellPrice,
-          buy: currentChartInstrument.buyPrice,
-        },
-      ]);
+  const getAccountBalance = async () => {
+    const res = await fetchAccountBalance(user.id);
+    if (res.data.status === 200) {
+      if (res.data.result && res.data.result.balance) {
+        localStorage.setItem("cash", res.data.result.balance);
+      }
     }
-  }
+  };
+  const addDataToChart = (currentChartInstrument) => {
+    const clearData = (data) => {
+      if (data.length > 100) {
+        return data.splice(Math.floor(data.length / 2), 1);
+      }
+      return data;
+    };
+    setChartData((prevData) => [
+      ...clearData(prevData),
+      {
+        time: new Date().toLocaleTimeString(),
+        sell: currentChartInstrument.sell,
+        buy: currentChartInstrument.buy,
+      },
+    ]);
+  };
 
   // CONVERT BLOB OBJECT TO JSON
   const handleBlob = (blob) => {
@@ -110,7 +126,7 @@ const StockMarket = ({}) => {
   };
 
   const openWS = async () => {
-    const websocketResponse = await openWebsocketConnection(cookies.secure);
+    const websocketResponse = await openWebsocketConnection();
     if (websocketResponse.status === 200) {
       // todo: get url from the websocketResponse
       const sock = new SockJS(
@@ -124,53 +140,66 @@ const StockMarket = ({}) => {
       client.heartbeat.incoming = 2000;
       client.heartbeat.outgoing = 2000;
       client.connect({}, function () {
-        client.subscribe("/cfd/quotes/1", function (message) {
+        client.subscribe(`/cfd/quotes/${user.id}`, function (message) {
           const jsonObject = JSON.parse(message.body);
-          console.log(jsonObject);
-          setLoading(false);
-          const currentChartInstrument = Object.values(
-            jsonObject["instruments"]
-          )[chosenInstrument];
-          addDataToChart(currentChartInstrument);
-          let sum = Object.values(jsonObject.openPositions).reduce(function (
-            accumulator,
-            currentValue
-          ) {
-            return accumulator + currentValue.result;
-          },
-          0);
-          setLiveResult(sum);
+          setTimeout(() => {
+            setLoading(false);
+          }, 3000);
+          const results = [
+            ...Object.values(jsonObject.openPositions).map(
+              (elem) => elem.result
+            ),
+          ];
+          setLiveResult(sum(results).toFixed(2));
           setOpenPositions(Object.values(jsonObject.openPositions));
-          setFreeCash(jsonObject.freeCash);
-          setLockedCash(jsonObject.lockedCash);
-          setStatus(jsonObject.status + 40);
-        })
+          const cash = JSON.parse(localStorage.getItem("cash"));
+          const margins = [
+            ...Object.values(jsonObject.openPositions).map(
+              (elem) => elem.margin
+            ),
+          ];
+          const locked = sum(margins);
+          const free = cash - locked;
+          setFreeCash(free.toFixed(2));
+          setLockedCash(locked.toFixed(2));
+          setStatus(calculateStatus(locked, cash));
+        });
         client.subscribe("/cfd/stocks/most-used", function (message) {
           const jsonObject = JSON.parse(message.body);
           setInstruments(Object.values(jsonObject));
+          addDataToChart(Object.values(jsonObject)[chosenInstrument]);
+        });
+        client.subscribe(`/cfd/balance/${user.id}`, function (message) {
+          const jsonObject = JSON.parse(message.body);
+          if (jsonObject && jsonObject.balance) {
+            localStorage.setItem("cash", jsonObject.balance);
+          }
         });
       });
       client.onWebSocketClose = function () {
-          openWS();
-      }
+        openWS();
+      };
     }
   };
 
-  useEffect (() => {
+  useEffect(() => {
     setTimeout(() => {
       checkForMarginCall();
     }, 3000);
   }, [openFirstTime]);
 
   useEffect(() => {
+    getAccountBalance();
     openWS();
-  }, []);
-
+  }, [loading]);
 
   return loading ? (
     <Loading />
   ) : (
     <Grid container justifyContent="center" sx={styles.wrapper}>
+      <Grid container item xs={12} xl={10} sx={styles.header}>
+        <Header />
+      </Grid>
       <Grid container justifyContent="flex-start" mt={5} sx={styles.wrapper}>
         <Grid
           container
@@ -179,7 +208,7 @@ const StockMarket = ({}) => {
           xl={2}
           spacing={5}
           px={0}
-          sx={styles.instruments}
+          sx={[styles.instruments, {maxHeight: openPositions.length <= 5 ? `calc(100vh + ${openPositions.length}*35px)` : `calc(100vh + 175px)`}]}
         >
           <Grid
             item
@@ -191,6 +220,7 @@ const StockMarket = ({}) => {
             <TextField id="outlined-basic" label="Search" variant="outlined" />
           </Grid>
           {instruments.map((current, index) => {
+            console.log(current);
             return (
               <Grid
                 item
@@ -203,7 +233,7 @@ const StockMarket = ({}) => {
                   name={current.name}
                   sellPrice={current.sell.toFixed(2)}
                   buyPrice={current.buy.toFixed(2)}
-                  minQuantity={current.minQuantity}
+                  minQuantity={current.quantity}
                   marketName={current.marketName}
                   margin={current.margin}
                 />
@@ -212,10 +242,12 @@ const StockMarket = ({}) => {
           })}
         </Grid>
         <Grid item xs={12} xl={10} sx={styles.positions}>
-          {/* <Typography variant="h4" color="#ffffff" mb={4}>
-            {instruments[chosenInstrument].name}
-          </Typography> */}
-          {/* <Grid
+          {instruments && instruments[chosenInstrument] ? (
+            <Typography variant="h4" color="#ffffff" mb={4}>
+              {instruments[chosenInstrument].name}
+            </Typography>
+          ) : null}
+          <Grid
             container
             sx={{ width: "100%", height: "350px" }}
             justifyContent={"center"}
@@ -226,20 +258,10 @@ const StockMarket = ({}) => {
               <YAxis />
               <Tooltip />
               <Legend />
-              <Line
-                type="monotone"
-                dataKey="sell"
-                stroke="red"
-                dot={false}
-              />
-              <Line
-                type="monotone"
-                dataKey="buy"
-                stroke="blue"
-                dot={false}
-              />
+              <Line type="monotone" dataKey="sell" stroke="red" dot={false} />
+              <Line type="monotone" dataKey="buy" stroke="blue" dot={false} />
             </LineChart>
-          </Grid> */}
+          </Grid>
           <Box sx={{ position: "absolute", bottom: 0, width: "83.3%" }}>
             <Grid
               item
@@ -254,7 +276,9 @@ const StockMarket = ({}) => {
                   onClick={handleOpen}
                 >
                   <AlarmAddOutlinedIcon />
-                <Typography color="#FF0000" sx={{style: "bold"}}>Margin Call</Typography>
+                  <Typography color="#FF0000" sx={{ style: "bold" }}>
+                    Margin Call
+                  </Typography>
                 </StyledIconButton>
               ) : null}
               <PositionsTable rows={openPositions} />
@@ -266,13 +290,13 @@ const StockMarket = ({}) => {
               sx={styles.result}
             >
               <Grid item xs={3}>
-                <Typography>LIVE RESULT {liveResult.toFixed(2)}</Typography>
+                <Typography>LIVE RESULT {liveResult}</Typography>
               </Grid>
               <Grid item xs={3}>
-                <Typography>FREE FUNDS {freeCash.toFixed(2)}</Typography>
+                <Typography>FREE FUNDS {freeCash}</Typography>
               </Grid>
               <Grid item xs={3}>
-                <Typography>BLOCKED FUNDS {lockedCash.toFixed(2)}</Typography>
+                <Typography>BLOCKED FUNDS {lockedCash}</Typography>
               </Grid>
               <Grid container item xs={3} justifyContent={"center"}>
                 <Typography>Status: </Typography>
@@ -285,8 +309,8 @@ const StockMarket = ({}) => {
         </Grid>
       </Grid>
       <div>
-        <Modal
-          open={openFirstTime|| showModal}
+        {/* <Modal
+          open={openFirstTime || showModal}
           onClose={handleClose}
           aria-labelledby="parent-modal-title"
           aria-describedby="parent-modal-description"
@@ -303,7 +327,7 @@ const StockMarket = ({}) => {
               Please, deposit additional funds.
             </Typography>
           </Box>
-        </Modal>
+        </Modal> */}
       </div>
     </Grid>
   );
@@ -318,12 +342,17 @@ const styles = {
     height: "100%",
     backgroundColor: "#00a7e1",
   },
+  header: {
+    position: "absolute",
+    right: 0,
+    zIndex: 2
+  },
   title: {
     position: "absolute",
     top: "50px",
   },
   instruments: {
-    maxHeight: "100vh",
+    // maxHeight: "calc('110vh')",
     overflow: "auto",
     padding: "0 10px",
     backgroundColor: "#E7EBF0",
@@ -335,7 +364,7 @@ const styles = {
     marginTop: "25px",
   },
   positions: {
-    margin: "0 auto",
+    margin: "30px auto 0",
   },
   result: {
     height: "50px",
@@ -362,7 +391,7 @@ const styles = {
   },
   icon: {
     ":hover": {
-      backgroundColor: "none"
+      backgroundColor: "none",
     },
     position: "absolute",
     color: "#FF0000",

@@ -4,7 +4,6 @@ import java.math.BigDecimal;
 import java.sql.Date;
 
 public class Position {
-    public final long userId;
     public final String ticker;
     public final BigDecimal quantity;
     public final String type;
@@ -14,8 +13,7 @@ public class Position {
     public final Date createdAt;
     public final Date updatedAt;
 
-    public Position(long userId, String name, BigDecimal quantity, String type, BigDecimal buyPrice, BigDecimal sellPrice, Boolean isClosed, Date createdAt, Date updatedAt) {
-        this.userId = userId;
+    public Position(String name, BigDecimal quantity, String type, BigDecimal buyPrice, BigDecimal sellPrice, Boolean isClosed, Date createdAt, Date updatedAt) {
         this.ticker = name;
         this.quantity = quantity;
         this.type = type;

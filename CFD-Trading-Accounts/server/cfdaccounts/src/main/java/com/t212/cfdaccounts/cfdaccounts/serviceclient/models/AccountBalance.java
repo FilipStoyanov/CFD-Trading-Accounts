@@ -1,5 +1,7 @@
 package com.t212.cfdaccounts.cfdaccounts.serviceclient.models;
 
-public class AccountBalance {
-    public final long userId;
+import java.math.BigDecimal;
+import java.sql.Date;
+
+public record AccountBalance(BigDecimal balance, Date updatedAt) {
 }

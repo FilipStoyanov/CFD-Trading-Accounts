@@ -1,7 +1,7 @@
 package com.t212.cfdaccounts.cfdaccounts.kafka;
 
 import com.t212.cfdaccounts.cfdaccounts.events.AccountBalanceUpdaterEvent;
-import com.t212.cfdaccounts.cfdaccounts.events.PositionsUpdaterEvent;
+import com.t212.cfdaccounts.cfdaccounts.events.PositionUpdateEvent;
 import com.t212.cfdaccounts.cfdaccounts.events.StockPriceUpdateEvent;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
@@ -12,6 +12,7 @@ import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
+import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 
 import java.util.HashMap;
@@ -31,7 +32,7 @@ public class KafkaProducerConfig {
     }
 
     @Bean
-    public KafkaTemplate<String, PositionsUpdaterEvent> positionsUpdatedPublisher(
+    public KafkaTemplate<String, PositionUpdateEvent> positionsUpdatedPublisher(
             ProducerFactory<String, String> producerFactory) {
         return new KafkaTemplate<>(
                 new DefaultKafkaProducerFactory<>(producerConfig()));
@@ -49,6 +50,7 @@ public class KafkaProducerConfig {
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+        props.put(JsonDeserializer.TRUSTED_PACKAGES, "*");
         return props;
     }
 }

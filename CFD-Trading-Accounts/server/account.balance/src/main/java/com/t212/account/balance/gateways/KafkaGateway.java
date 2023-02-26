@@ -1,6 +1,6 @@
 package com.t212.account.balance.gateways;
 
-import com.t212.account.balance.lib.events.AccountBalanceUpdaterEvent;
+import com.t212.account.balance.events.AccountBalanceUpdaterEvent;
 import org.springframework.kafka.core.KafkaTemplate;
 
 public class KafkaGateway {

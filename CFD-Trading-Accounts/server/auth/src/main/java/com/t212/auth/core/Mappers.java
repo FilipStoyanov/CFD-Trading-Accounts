@@ -5,6 +5,6 @@ import com.t212.auth.repositories.models.UserDAO;
 
 public class Mappers {
     public static UserOutput fromResultSetToUserOutput(UserDAO user) {
-        return new UserOutput(user.id, user.username, user.nationalId, user.email);
+        return new UserOutput(user.id(), user.username(), user.nationalId(), user.email());
     }
 }

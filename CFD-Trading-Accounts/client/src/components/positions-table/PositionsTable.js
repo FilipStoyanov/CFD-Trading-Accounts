@@ -339,15 +339,15 @@ export default function PositionsTable({ rows }) {
                       <TableCell align="right">
                         {row.type === "LONG" ? "Buy" : "Sell"}
                       </TableCell>
-                      <TableCell align="right">{row.price}</TableCell>
+                      <TableCell align="right">{row.price.toFixed(2)}</TableCell>
                       <TableCell align="right">
-                        {row.currentPrice.toFixed(4)}
+                        {row.currentPrice.toFixed(2)}
                       </TableCell>
                       <TableCell align="right">
-                        {row.margin.toFixed(4)}
+                        {row.margin.toFixed(2)}
                       </TableCell>
                       <TableCell align="right">
-                        {row.result.toFixed(4)}
+                        {row.result.toFixed(2)}
                       </TableCell>
                     </TableRow>
                   );

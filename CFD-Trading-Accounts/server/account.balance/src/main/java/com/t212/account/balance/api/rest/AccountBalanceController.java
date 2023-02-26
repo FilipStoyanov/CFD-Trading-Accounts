@@ -1,11 +1,11 @@
 package com.t212.account.balance.api.rest;
 
-import com.t212.account.balance.api.rest.models.ApiResponse;
 import com.t212.account.balance.api.rest.models.BalanceInput;
-import com.t212.account.balance.core.AccountBalanceService;
 import com.t212.account.balance.core.models.AccountBalance;
+import com.t212.account.balance.events.AccountBalanceUpdaterEvent;
 import com.t212.account.balance.gateways.KafkaGateway;
-import com.t212.account.balance.lib.events.AccountBalanceUpdaterEvent;
+import com.t212.account.balance.api.rest.models.ApiResponse;
+import com.t212.account.balance.core.AccountBalanceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -45,7 +45,7 @@ public class AccountBalanceController {
         }
         try {
             AccountBalance accountBalance = accountBalanceService.withdraw(userId, balance.amount);
-            AccountBalanceUpdaterEvent pEvent = new AccountBalanceUpdaterEvent(userId, accountBalance.balance, System.currentTimeMillis());
+            AccountBalanceUpdaterEvent pEvent = new AccountBalanceUpdaterEvent(userId, accountBalance.balance(), System.currentTimeMillis());
             kafkaGateway.sendAccountBalanceUpdateEvent(pEvent);
             return ResponseEntity.status(200).body(new ApiResponse(200, "Successfully updated", accountBalance));
         } catch (DataAccessException e) {
@@ -60,7 +60,7 @@ public class AccountBalanceController {
         }
         try {
             AccountBalance accountBalance = accountBalanceService.deposit(userId, deposit.amount);
-            AccountBalanceUpdaterEvent pEvent = new AccountBalanceUpdaterEvent(userId, accountBalance.balance, System.currentTimeMillis());
+            AccountBalanceUpdaterEvent pEvent = new AccountBalanceUpdaterEvent(userId, accountBalance.balance(), System.currentTimeMillis());
             kafkaGateway.sendAccountBalanceUpdateEvent(pEvent);
             return ResponseEntity.status(200).body(new ApiResponse(200, "Successfully updated balance", accountBalance));
         } catch (DataAccessException e) {

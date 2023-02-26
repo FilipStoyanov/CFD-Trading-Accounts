@@ -1,7 +1,7 @@
 package com.t212.cfdaccounts.cfdaccounts.gateways;
 
 import com.t212.cfdaccounts.cfdaccounts.events.AccountBalanceUpdaterEvent;
-import com.t212.cfdaccounts.cfdaccounts.events.PositionsUpdaterEvent;
+import com.t212.cfdaccounts.cfdaccounts.events.PositionUpdateEvent;
 import com.t212.cfdaccounts.cfdaccounts.events.StockPriceUpdateEvent;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,7 +28,7 @@ public class GatewayBeans {
     @Bean
     public KafkaGateway kafkaGateway(
             KafkaTemplate<String, StockPriceUpdateEvent> stockPricesPublisher,
-            KafkaTemplate<String, PositionsUpdaterEvent> positionsUpdatedPublisher,
+            KafkaTemplate<String, PositionUpdateEvent> positionsUpdatedPublisher,
             KafkaTemplate<String, AccountBalanceUpdaterEvent> accountBalanceUpdatedPublisher) {
         return new KafkaGateway(
                 stockPriceUpdateTopic, stockPriceUpdateTopicCnt, stockPricesPublisher, positionsUpdateTopic, positionsUpdatedPublisher, accountBalanceUpdateTopic, accountBalanceUpdatedPublisher);

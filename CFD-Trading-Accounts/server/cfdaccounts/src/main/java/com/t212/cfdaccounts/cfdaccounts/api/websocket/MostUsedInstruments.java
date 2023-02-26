@@ -49,15 +49,15 @@ public class MostUsedInstruments {
             groupId = "cfd_quotes_most_used",
             containerFactory = "StockPricesUpdatedContainerFactory")
     void listenForPrices(StockPriceUpdateEvent data) {
-        if (mostUsedInstruments.containsKey(data.ticker)) {
-            InstrumentWithPrice ins = mostUsedInstruments.get(data.ticker);
-            ins.setBuy(data.ask);
-            ins.setSell(data.bid);
-            mostUsedInstruments.put(data.ticker, ins);
+        if (mostUsedInstruments.containsKey(data.ticker())) {
+            InstrumentWithPrice ins = mostUsedInstruments.get(data.ticker());
+            ins.setBuy(data.ask());
+            ins.setSell(data.bid());
+            mostUsedInstruments.put(data.ticker(), ins);
         }
     }
 
-    @Scheduled(cron = "*/5 0/1 10-18 * * *")
+    @Scheduled(fixedRate = 5000)
     void sendMessageToChannelForMostUsedInstruments() {
         messagingTemplate.convertAndSend("/cfd/stocks/most-used", mostUsedInstruments);
     }

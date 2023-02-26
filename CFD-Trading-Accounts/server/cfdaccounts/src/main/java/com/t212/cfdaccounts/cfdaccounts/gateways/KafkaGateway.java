@@ -1,13 +1,13 @@
 package com.t212.cfdaccounts.cfdaccounts.gateways;
 
 import com.t212.cfdaccounts.cfdaccounts.events.AccountBalanceUpdaterEvent;
-import com.t212.cfdaccounts.cfdaccounts.events.PositionsUpdaterEvent;
+import com.t212.cfdaccounts.cfdaccounts.events.PositionUpdateEvent;
 import com.t212.cfdaccounts.cfdaccounts.events.StockPriceUpdateEvent;
 import org.springframework.kafka.core.KafkaTemplate;
 
 public class KafkaGateway {
     private final KafkaTemplate<String, StockPriceUpdateEvent> stockPriceUpdateEvent;
-    private final KafkaTemplate<String, PositionsUpdaterEvent> positionUpdatedEvent;
+    private final KafkaTemplate<String, PositionUpdateEvent> positionUpdatedEvent;
     private final KafkaTemplate<String, AccountBalanceUpdaterEvent> accountBalanceUpdatedEvent;
 
     private final String stockPriceUpdateTopic;
@@ -20,7 +20,7 @@ public class KafkaGateway {
             Integer stockPriceUpdateTopicCnt,
             KafkaTemplate<String, StockPriceUpdateEvent> stockPriceUpdateEvent,
             String positionsUpdatedTopic,
-            KafkaTemplate<String, PositionsUpdaterEvent> positionsUpdatedEvent,
+            KafkaTemplate<String, PositionUpdateEvent> positionsUpdatedEvent,
             String accountBalanceTopic,
             KafkaTemplate<String, AccountBalanceUpdaterEvent> accountBalanceUpdatedEvent
     ) {
@@ -37,7 +37,7 @@ public class KafkaGateway {
         stockPriceUpdateEvent.send(stockPriceUpdateTopic, stockPrice);
     }
 
-    public void sendPositionUpdateEvent(PositionsUpdaterEvent positionsEvent) {
+    public void sendPositionUpdateEvent(PositionUpdateEvent positionsEvent) {
         positionUpdatedEvent.send(positionsUpdatedTopic, positionsEvent);
     }
 

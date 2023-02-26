@@ -3,17 +3,12 @@ package com.t212.cfdaccounts.cfdaccounts.api.websocket.models;
 import com.t212.cfdaccounts.cfdaccounts.core.models.OpenPositionPPL;
 import com.t212.cfdaccounts.cfdaccounts.repositories.models.AccountPositionDAO;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class WebSocketClient {
     private Map<String, OpenPositionPPL> openPositions;
-    private BigDecimal freeCash;
-    private BigDecimal lockedCash;
-
-    private BigDecimal status;
     private Map<String, AccountPositionDAO> positions;
 
     public WebSocketClient() {
@@ -21,11 +16,8 @@ public class WebSocketClient {
         this.positions = new ConcurrentHashMap<>();
     }
 
-    public WebSocketClient(Map<String, InstrumentToPrice> instruments, Map<String, OpenPositionPPL> openPositions, BigDecimal freeCash, BigDecimal lockedCash, BigDecimal status, Map<String, AccountPositionDAO> positions) {
+    public WebSocketClient(Map<String, OpenPositionPPL> openPositions, Map<String, AccountPositionDAO> positions) {
         this.openPositions = openPositions;
-        this.freeCash = freeCash;
-        this.lockedCash = lockedCash;
-        this.status = status;
         this.positions = positions;
     }
 
@@ -51,36 +43,11 @@ public class WebSocketClient {
         this.openPositions = openPositions;
     }
 
-    public BigDecimal getFreeCash() {
-        return freeCash;
-    }
-
-    public void setFreeCash(BigDecimal freeCash) {
-        this.freeCash = freeCash;
-    }
-
-    public BigDecimal getLockedCash() {
-        return lockedCash;
-    }
-
-    public void setLockedCash(BigDecimal lockedCash) {
-        this.lockedCash = lockedCash;
-    }
-
-    public BigDecimal getStatus() {
-        return status;
-    }
-
-    public void setStatus(BigDecimal status) {
-        this.status = status;
-    }
-
     @Override
     public String toString() {
-        return "Message[" +
+        return "WebSocketClient[" +
                 "openPositions=" + openPositions + ", " +
-                "freeCash=" + freeCash + ", " +
-                "lockedCash=" + lockedCash + ", " +
-                "status=" + status + "]";
+                "positions=" + positions;
+
     }
 }

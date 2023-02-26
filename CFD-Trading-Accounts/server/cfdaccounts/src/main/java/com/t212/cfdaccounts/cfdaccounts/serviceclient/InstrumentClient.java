@@ -40,7 +40,6 @@ public class InstrumentClient {
         for (InstrumentWithPrice i : instruments) {
             instrumentPrices.put(i.ticker, i);
         }
-        System.out.println(instrumentPrices.size());
         return instrumentPrices;
     }
 

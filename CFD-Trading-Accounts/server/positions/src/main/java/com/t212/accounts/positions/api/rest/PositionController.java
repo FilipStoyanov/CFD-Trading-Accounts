@@ -10,7 +10,6 @@ import com.t212.accounts.positions.core.models.PositionWithPrices;
 import com.t212.accounts.positions.gateways.KafkaGateway;
 import com.t212.accounts.positions.lib.events.ClosePositionEvent;
 import com.t212.accounts.positions.lib.events.OpenPositionEvent;
-import com.t212.accounts.positions.repositories.models.AccountPositionDAO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -77,8 +76,8 @@ public class PositionController {
             return ResponseEntity.status(400).body(new ApiResponse(400, "Invalid path variable"));
         }
         try {
-            Position updatedPosition = positionsService.updatePosition(userId, positionId, positionUpdate.positionType);
-            ClosePositionEvent pEvent = new ClosePositionEvent(userId, updatedPosition.ticker, positionUpdate.positionType, positionUpdate.quantity, positionUpdate.buyPrice, positionUpdate.sellPrice, System.currentTimeMillis());
+            Position updatedPosition = positionsService.updatePosition(userId, positionId, positionUpdate.positionType());
+            ClosePositionEvent pEvent = new ClosePositionEvent(userId, updatedPosition.ticker, positionUpdate.positionType(), positionUpdate.quantity(), positionUpdate.buyPrice(), positionUpdate.sellPrice(), System.currentTimeMillis());
             kafkaGateway.sendClosePositionEvent(pEvent);
             return ResponseEntity.status(200).body(new ApiResponse(200, "Successfully updated", updatedPosition));
         } catch (DataAccessException e) {
@@ -92,8 +91,8 @@ public class PositionController {
             return ResponseEntity.status(400).body(new ApiResponse(400, "Invalid path variable"));
         }
         try {
-            Position newPosition = positionsService.addPosition(userId, position.instrumentId, position.quantity, position.type, position.buyPrice, position.sellPrice);
-            OpenPositionEvent pEvent = new OpenPositionEvent(userId, newPosition.ticker, position.type, position.quantity, position.buyPrice, position.sellPrice, System.currentTimeMillis());
+            Position newPosition = positionsService.addPosition(userId, position.instrumentId(), position.quantity(), position.type(), position.buyPrice(), position.sellPrice());
+            OpenPositionEvent pEvent = new OpenPositionEvent(userId, newPosition.ticker, position.type(), position.quantity(), position.buyPrice(), position.sellPrice(), System.currentTimeMillis());
             kafkaGateway.sendOpenPositionEvent(pEvent);
             return ResponseEntity.status(200).body(new ApiResponse(200, "Successfully created", newPosition));
         } catch (DataAccessException e) {

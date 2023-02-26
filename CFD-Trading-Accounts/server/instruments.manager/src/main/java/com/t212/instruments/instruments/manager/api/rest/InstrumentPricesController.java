@@ -2,7 +2,6 @@ package com.t212.instruments.instruments.manager.api.rest;
 
 import com.t212.instruments.instruments.manager.api.rest.models.ApiResponse;
 import com.t212.instruments.instruments.manager.core.InstrumentService;
-import com.t212.instruments.instruments.manager.core.models.Instrument;
 import com.t212.instruments.instruments.manager.core.models.InstrumentWithPrice;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.ResponseEntity;

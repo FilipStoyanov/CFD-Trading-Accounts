@@ -4,15 +4,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.t212.cfdaccounts.cfdaccounts.api.rest.models.ApiResponse;
-import com.t212.cfdaccounts.cfdaccounts.serviceclient.models.InstrumentWithPrice;
+import com.t212.cfdaccounts.cfdaccounts.serviceclient.models.AccountBalance;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
-
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 public class AccountBalanceClient {
@@ -24,16 +19,12 @@ public class AccountBalanceClient {
         this.objectMapper = objectMapper;
     }
 
-    public Acc getAccountBalance(long userId) throws JsonProcessingException {
-        ApiResponse response = restTemplate.getForObject(instrumentPricesURL, ApiResponse.class);
-        Map<String, InstrumentWithPrice> instrumentPrices = new ConcurrentHashMap<>();
+    public AccountBalance getAccountBalance(long userId) throws JsonProcessingException {
+        final String accountBalanceURL = "http://localhost:8083/api/v1/users/" + userId + "/balance";
+        ApiResponse response = restTemplate.getForObject(accountBalanceURL, ApiResponse.class);
         String result = objectMapper.writeValueAsString(response.getResult());
-        List<InstrumentWithPrice> instruments = objectMapper.readValue(result, new TypeReference<List<InstrumentWithPrice>>() {
+        AccountBalance balance = objectMapper.readValue(result, new TypeReference<>() {
         });
-        for (InstrumentWithPrice i : instruments) {
-            instrumentPrices.put(i.ticker, i);
-        }
-        System.out.println(instrumentPrices.size());
-        return instrumentPrices;
+        return balance;
     }
 }
