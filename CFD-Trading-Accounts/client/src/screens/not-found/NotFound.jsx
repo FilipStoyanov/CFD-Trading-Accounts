@@ -1,10 +1,11 @@
 import { Grid, Typography, Button } from "@mui/material";
 import { useCookies } from "react-cookie";
+import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 
 const NotFound = ({}) => {
   const navigate = useNavigate();
-  const [cookies, setCookie, removeCookies] = useCookies();
+  const user = useSelector((state) => state.user.user);
   return (
     <Grid container justifyContent="center" sx={styles.wrapper}>
       <Grid container justifyContent="center" flexDirection={"column"}>
@@ -13,12 +14,12 @@ const NotFound = ({}) => {
           Sorry the page you're looking for doesn't exists.
         </Typography>
       </Grid>
-      {cookies.secure ? (
+      {user.id ? (
         <Button
           variant="contained"
           size="large"
           sx={styles.button}
-          onClick={() => navigate("/")}
+          onClick={() => navigate("/home")}
         >
           RETURN HOME
         </Button>

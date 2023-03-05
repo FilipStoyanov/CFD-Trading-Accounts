@@ -10,4 +10,5 @@ public class ApplicationBeans {
     public RestTemplate restTemplate() {
         return new RestTemplate();
     }
+
 }

@@ -7,7 +7,7 @@ import { useCookies } from "react-cookie";
 import { useDispatch } from "react-redux";
 import { add } from "../../store/slices/userSlice";
 
-const Login = ({ header = false }) => {
+const Login = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [cookies, setCookies] = useCookies();
@@ -60,6 +60,7 @@ const Login = ({ header = false }) => {
 
   useEffect(() => {
     localStorage.clear();
+    sessionStorage.clear();
   }, []);
   return (
     <>
@@ -111,9 +112,6 @@ const Login = ({ header = false }) => {
               >
                 Sign In
               </Button>
-              <Typography mt={2} mb={2}>
-                Don't have an account? <Link to="/registration">Sign up</Link>
-              </Typography>
             </form>
           </Grid>
         </Paper>
@@ -132,5 +130,6 @@ const styles = {
   button: {
     height: "50px",
     marginTop: "20px",
+    marginBottom: "20px"
   },
 };

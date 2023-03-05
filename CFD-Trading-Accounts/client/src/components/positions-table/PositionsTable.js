@@ -14,9 +14,6 @@ import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import Paper from "@mui/material/Paper";
 import Checkbox from "@mui/material/Checkbox";
-import IconButton from "@mui/material/IconButton";
-import Tooltip from "@mui/material/Tooltip";
-import DeleteIcon from "@mui/icons-material/Delete";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import { visuallyHidden } from "@mui/utils";
 
@@ -129,17 +126,6 @@ function EnhancedTableHead(props) {
   return (
     <TableHead>
       <TableRow>
-        <TableCell padding="checkbox">
-          <Checkbox
-            color="primary"
-            indeterminate={numSelected > 0 && numSelected < rowCount}
-            checked={rowCount > 0 && numSelected === rowCount}
-            onChange={onSelectAllClick}
-            inputProps={{
-              "aria-label": "select all instruments",
-            }}
-          />
-        </TableCell>
         {headCells.map((headCell, index) => (
           <TableCell
             key={headCell.id}
@@ -151,6 +137,7 @@ function EnhancedTableHead(props) {
               active={orderBy === headCell.id}
               direction={orderBy === headCell.id ? order : "asc"}
               onClick={createSortHandler(headCell.id)}
+              sx = {styles.cell}
             >
               {headCell.label}
               {orderBy === headCell.id ? (
@@ -207,17 +194,10 @@ function EnhancedTableToolbar(props) {
           variant="h6"
           id="tableTitle"
           component="div"
+          fontSize = {22}
         >
           Positions
         </Typography>
-      )}
-
-      {numSelected > 0 && (
-        <Tooltip title="Delete">
-          <IconButton>
-            <DeleteIcon />
-          </IconButton>
-        </Tooltip>
       )}
     </Toolbar>
   );
@@ -249,26 +229,6 @@ export default function PositionsTable({ rows }) {
     setSelected([]);
   };
 
-  const handleClick = (event, ticker) => {
-    const selectedIndex = selected.indexOf(ticker);
-    let newSelected = [];
-
-    if (selectedIndex === -1) {
-      newSelected = newSelected.concat(selected, ticker);
-    } else if (selectedIndex === 0) {
-      newSelected = newSelected.concat(selected.slice(1));
-    } else if (selectedIndex === selected.length - 1) {
-      newSelected = newSelected.concat(selected.slice(0, -1));
-    } else if (selectedIndex > 0) {
-      newSelected = newSelected.concat(
-        selected.slice(0, selectedIndex),
-        selected.slice(selectedIndex + 1)
-      );
-    }
-
-    setSelected(newSelected);
-  };
-
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
@@ -289,7 +249,7 @@ export default function PositionsTable({ rows }) {
         <EnhancedTableToolbar numSelected={selected.length} />
         <TableContainer>
           <Table
-            sx={{ minWidth: 750 }}
+            sx={[styles.table, { minWidth: 750, padding: "0px 18px"}]}
             aria-labelledby="tableTitle"
             size={"small"}
           >
@@ -305,31 +265,16 @@ export default function PositionsTable({ rows }) {
               {stableSort(rows, getComparator(order, orderBy))
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                 .map((row, index) => {
-                  const isItemSelected = isSelected(row.ticker);
-                  const labelId = `enhanced-table-checkbox-${index}`;
-
                   return (
                     <TableRow
                       hover
-                      onClick={(event) => handleClick(event, row.ticker)}
+                      onClick={(event) => {}}
                       role="checkbox"
-                      aria-checked={isItemSelected}
                       tabIndex={-1}
-                      key={row.ticker}
-                      selected={isItemSelected}
+                      key={row.ticker + "_" + row.type}
                     >
-                      <TableCell padding="checkbox">
-                        <Checkbox
-                          color="primary"
-                          checked={isItemSelected}
-                          inputProps={{
-                            "aria-labelledby": labelId,
-                          }}
-                        />
-                      </TableCell>
                       <TableCell
                         component="th"
-                        id={labelId}
                         scope="row"
                         padding="none"
                       >
@@ -346,7 +291,7 @@ export default function PositionsTable({ rows }) {
                       <TableCell align="right">
                         {row.margin.toFixed(2)}
                       </TableCell>
-                      <TableCell align="right">
+                      <TableCell align="right" sx={row.result < 0 ? {color: "#fa6464"} : {color: "#3f3f3f"}}>
                         {row.result.toFixed(2)}
                       </TableCell>
                     </TableRow>
@@ -365,7 +310,7 @@ export default function PositionsTable({ rows }) {
           </Table>
         </TableContainer>
         <TablePagination
-          rowsPerPageOptions={[5, 10, 25]}
+          rowsPerPageOptions={[5, 10]}
           component="div"
           count={rows.length}
           rowsPerPage={rowsPerPage}
@@ -376,4 +321,22 @@ export default function PositionsTable({ rows }) {
       </Paper>
     </Box>
   );
+}
+
+const styles = {
+  invisible: {
+    visibility: "hidden"
+  }, 
+  cell: {
+    color: "#747980"
+  },
+  row: {
+    paddingLeft: 10,
+    paddingRight: 10
+  },
+  table: {
+    "&.MuiTable-root": {
+      borderCollapse: "unset",
+    },
+  }
 }

@@ -5,6 +5,6 @@ import com.t212.cfdaccounts.cfdaccounts.api.websocket.models.WebSocketClient;
 
 public final class Mappers {
     public static Message fromClientToMessage(WebSocketClient client) {
-        return new Message(client.getOpenPositions());
+        return new Message(client.getOpenPositions(), client.getLockedCash(), client.getResult());
     }
 }

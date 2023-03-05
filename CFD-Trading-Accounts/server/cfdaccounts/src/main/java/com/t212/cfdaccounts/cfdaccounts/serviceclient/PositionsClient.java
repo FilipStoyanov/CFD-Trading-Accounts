@@ -7,7 +7,9 @@ import com.t212.cfdaccounts.cfdaccounts.api.rest.models.ApiResponse;
 import com.t212.cfdaccounts.cfdaccounts.repositories.models.AccountPositionDAO;
 import com.t212.cfdaccounts.cfdaccounts.serviceclient.models.PositionWithPrices;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
@@ -25,10 +27,11 @@ public class PositionsClient {
         this.objectMapper = objectMapper;
     }
 
-    final String mostUsedInstrumentsURL = "http://localhost:8082/api/v1/instruments/most-used";
+    @Value("${positions.service.endpoint}")
+    private String positionsURL;
 
-    public List<AccountPositionDAO> getOpenPositions(long userId) throws JsonProcessingException {
-        String userPositionsUrl = "http://localhost:8081/api/v1/users/" + userId + "/positions";
+    public List<AccountPositionDAO> getOpenPositions(long userId) throws JsonProcessingException, ResourceAccessException {
+        String userPositionsUrl = positionsURL + userId + "/positions";
         ApiResponse response = restTemplate.getForObject(userPositionsUrl, ApiResponse.class);
         String result = objectMapper.writeValueAsString(response.getResult());
         List<AccountPositionDAO> positions = objectMapper.readValue(result, new TypeReference<>() {
@@ -37,7 +40,7 @@ public class PositionsClient {
     }
 
     public Map<String, PositionWithPrices> getOpenPositionsWithPrices(long userId) throws JsonProcessingException {
-        String userPositionsUrl = "http://localhost:8081/api/v1/users/" + userId + "/open-positions";
+        String userPositionsUrl = positionsURL + userId + "/open-positions";
         ApiResponse response = restTemplate.getForObject(userPositionsUrl, ApiResponse.class);
         Map<String, PositionWithPrices> userPositions = new ConcurrentHashMap<>();
         String result = objectMapper.writeValueAsString(response.getResult());

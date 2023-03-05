@@ -1,22 +1,26 @@
 package com.t212.cfdaccounts.cfdaccounts.api.websocket;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.t212.cfdaccounts.cfdaccounts.api.websocket.models.ConnectionError;
 import com.t212.cfdaccounts.cfdaccounts.api.websocket.models.WebSocketClient;
 import com.t212.cfdaccounts.cfdaccounts.api.websocket.services.WebSocketService;
 import com.t212.cfdaccounts.cfdaccounts.core.Mappers;
-import com.t212.cfdaccounts.cfdaccounts.core.AccountBalanceListener;
 import com.t212.cfdaccounts.cfdaccounts.core.PositionsListener;
 import com.t212.cfdaccounts.cfdaccounts.core.StockPricesListener;
 import com.t212.cfdaccounts.cfdaccounts.core.models.OpenPositionPPL;
-import com.t212.cfdaccounts.cfdaccounts.events.AccountBalanceUpdaterEvent;
 import com.t212.cfdaccounts.cfdaccounts.repositories.models.AccountPositionDAO;
 import com.t212.cfdaccounts.cfdaccounts.serviceclient.PositionsClient;
 import com.t212.cfdaccounts.cfdaccounts.serviceclient.models.InstrumentWithPrice;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
+import org.springframework.messaging.converter.MessageConverter;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.socket.messaging.SessionSubscribeEvent;
 import org.springframework.web.socket.messaging.SessionUnsubscribeEvent;
 
@@ -36,21 +40,29 @@ public class PPLAndMarginHandler {
     private SimpMessagingTemplate messagingTemplate;
 
     @Autowired
+    private MessageConverter messageConverter;
+
+    @Autowired
     private StockPricesListener stockPricesListener;
 
     @Autowired
     private PositionsListener positionsListener;
-    @Autowired
-    private AccountBalanceListener accountBalanceListener;
     private final WebSocketService websocketService;
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(PPLAndMarginHandler.class);
     private final PositionsClient positionClient;
     private Map<Long, WebSocketClient> messagesForUsers;
+
+    private final ExecutorService executorService;
+
+    private final ObjectMapper objectMapper;
 
     public PPLAndMarginHandler(WebSocketService websocketService, PositionsClient positionClient) {
         this.websocketService = websocketService;
         this.messagesForUsers = new ConcurrentHashMap<>();
         this.positionClient = positionClient;
+        executorService = Executors.newFixedThreadPool(6);
+        this.objectMapper = new ObjectMapper();
     }
 
     private Map<String, OpenPositionPPL> calculateOpenPositionsMarginAndPPL(Map<String, AccountPositionDAO> mapOfOpenPositions) {
@@ -68,7 +80,7 @@ public class PPLAndMarginHandler {
                 result = (currentPrice.subtract(price)).multiply(position.getValue().quantity).add(spread);
                 //margin = ask/bid price * leverage
                 margin = position.getValue().quantity.multiply(currentPrice.multiply(currentInstrument.leverage));
-                openPositionPPL.put(position.getValue().ticker, new OpenPositionPPL(position.getValue().ticker, position.getValue().quantity, position.getValue().type, price, currentPrice, margin, result));
+                openPositionPPL.put(position.getValue().ticker + "_" + position.getValue().type, new OpenPositionPPL(position.getValue().ticker, position.getValue().quantity, position.getValue().type, price, currentPrice, margin, result));
             }
         }
         return openPositionPPL;
@@ -87,15 +99,16 @@ public class PPLAndMarginHandler {
     }
 
 
-    private Map<String, BigDecimal> calculateCashAndStatus(Map<String, OpenPositionPPL> openPositions, BigDecimal accountBalance) {
+    private Map<String, BigDecimal> calculateCashAndStatus(Map<String, OpenPositionPPL> openPositions) {
         Map<String, BigDecimal> balance = new ConcurrentHashMap<>();
         BigDecimal lockedCash = new BigDecimal(0);
+        BigDecimal result = new BigDecimal(0);
         for (Map.Entry<String, OpenPositionPPL> position : openPositions.entrySet()) {
             lockedCash = lockedCash.add(position.getValue().margin());
+            result = result.add(position.getValue().result());
         }
         balance.put("lockedCash", lockedCash);
-        balance.put("freeCash", accountBalance.subtract(lockedCash));
-        balance.put("status", calculateStatus(lockedCash, accountBalance));
+        balance.put("result", result);
         return balance;
     }
 
@@ -115,25 +128,17 @@ public class PPLAndMarginHandler {
                 messagesForUsers.put(userId, message);
                 websocketService.addConnection(userId);
             } catch (JsonProcessingException e) {
-                System.out.println("JsonProcessingException: ");
-                //todo: handle this exception
+                LOGGER.warn("Exception occurred:", e);
+            } catch (ResourceAccessException e) {
+                LOGGER.warn("Exception occurred:", e);
+                messagingTemplate.convertAndSend("/cfd/errors", new ConnectionError("error", "An error has occurred"));
             }
         }
     }
 
     private Map<String, AccountPositionDAO> updateUserPositions(long userId) {
-        Map<String, AccountPositionDAO> positions = positionsListener.getUserPositions(userId);
-        return positions;
+        return positionsListener.getUserPositions(userId);
     }
-
-    private BigDecimal updateAccountBalance(long userId) {
-        AccountBalanceUpdaterEvent event = accountBalanceListener.getAccountBalanceEventForUser(userId);
-        if (event != null) {
-            return event.balance();
-        }
-        return null;
-    }
-
 
     @EventListener
     public void handleUnsubscribeEvent(SessionUnsubscribeEvent event) {
@@ -156,19 +161,24 @@ public class PPLAndMarginHandler {
         webSocketClient.setPositions(userOpenPositions);
         Map<String, OpenPositionPPL> openPositionsWithPPLAndMargin = calculateOpenPositionsMarginAndPPL(userOpenPositions);
         webSocketClient.setOpenPositions(openPositionsWithPPLAndMargin);
-        synchronized (messagesForUsers) {
-            messagesForUsers.put(userId, webSocketClient);
-            messagingTemplate.convertAndSend("/cfd/quotes/" + userId, Mappers.fromClientToMessage(webSocketClient));
-        }
+        Map<String, BigDecimal> accountBalance = calculateCashAndStatus(webSocketClient.getOpenPositions());
+        webSocketClient.setLockedCash(accountBalance.get("lockedCash"));
+        webSocketClient.setResult(accountBalance.get("result"));
+        messagesForUsers.put(userId, webSocketClient);
+        messagingTemplate.convertAndSend("/cfd/quotes/" + userId, Mappers.fromClientToMessage(webSocketClient));
     }
 
-    @Scheduled(initialDelay = 1000, fixedRate = 1000)
+    @Scheduled(initialDelay = 1000, fixedRate = 5000)
     public void sendMessageToClients() {
-        ExecutorService executor = Executors.newFixedThreadPool(10);
-        for (Long user : websocketService.getConnectedUsers()) {
-            executor.execute(() -> {
-                sendMessageToUser(user);
-            });
+        if (stockPricesListener.hasConnectionError()) {
+            messagingTemplate.convertAndSend("/cfd/errors", new ConnectionError("error", "An error has occurred"));
+            stockPricesListener.loadInstrumentsWithPrices();
+        } else {
+            for (long user : websocketService.getConnectedUsers()) {
+                executorService.submit(() -> {
+                    sendMessageToUser(user);
+                });
+            }
         }
     }
 }

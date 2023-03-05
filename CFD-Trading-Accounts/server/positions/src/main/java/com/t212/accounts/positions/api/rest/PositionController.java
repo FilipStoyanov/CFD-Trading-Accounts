@@ -44,6 +44,19 @@ public class PositionController {
         }
     }
 
+    @GetMapping(value = "{id}/positions-type")
+    public ResponseEntity<ApiResponse> getTypesOfOpenPositions(@PathVariable("id") long userId) {
+        if (userId <= 0) {
+            return ResponseEntity.status(400).body(new ApiResponse(400, "Invalid parameters"));
+        }
+        try {
+            List<String> types = positionsService.getAllTypesOfPositions(userId);
+            return ResponseEntity.status(200).body(new ApiResponse(200, "", types));
+        } catch (EmptyResultDataAccessException e) {
+            return ResponseEntity.status(404).body(new ApiResponse(404, "Not found open positions"));
+        }
+    }
+
     @GetMapping(value = "{id}/open-positions")
     public ResponseEntity<ApiResponse> listOpenPositionsWithCurrentPrices(@PathVariable("id") long id) {
         if (id <= 0) {

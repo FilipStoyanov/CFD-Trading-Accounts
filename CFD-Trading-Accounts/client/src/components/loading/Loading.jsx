@@ -7,7 +7,7 @@ const Loading = () => {
     <Grid sx={styles.wrapper}>
       <Grid sx={styles.progress}>
         <Typography color="white" variant="h3" mb={4}>
-          Trading212
+          Trading 212
         </Typography>
         <LinearProgress />
       </Grid>

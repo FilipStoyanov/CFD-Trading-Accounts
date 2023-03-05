@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @CrossOrigin(value = "*")
@@ -24,17 +25,28 @@ public class InstrumentController {
 
     @PostMapping
     public ResponseEntity<ApiResponse> addInstrument(@RequestBody InstrumentInput instrument) {
-        Instrument createdInstrument = instrumentService.addInstrument(instrument.name(), instrument.fullname(), instrument.quantity(), instrument.leverage(), instrument.marketName());
-        return ResponseEntity.status(201).body(new ApiResponse(201, "", createdInstrument));
+        try {
+            Instrument createdInstrument = instrumentService.addInstrument(instrument.name(), instrument.fullname(), instrument.ticker(), instrument.type(), instrument.quantity(), instrument.leverage(), instrument.marketName());
+            return ResponseEntity.status(201).body(new ApiResponse(201, "", createdInstrument));
+        } catch (EmptyResultDataAccessException e) {
+            return ResponseEntity.status(400).body(new ApiResponse(400, "Invalid body data"));
+        }
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse> listInstruments(@RequestParam("page") Integer page, @RequestParam("pageSize") Integer pageSize) {
-        if (page < 0 || pageSize <= 0) {
-            return ResponseEntity.status(400).body(new ApiResponse(200, "Invalid parameters"));
+    public ResponseEntity<ApiResponse> listInstruments(@RequestParam("page") Optional<Integer> page, @RequestParam("pageSize") Optional<Integer> pageSize) {
+        if (!page.isPresent() && !pageSize.isPresent()) {
+            List<Instrument> instruments = instrumentService.listAllInstruments();
+            return ResponseEntity.status(200).body(new ApiResponse(200, "", instruments));
         }
-        List<Instrument> instruments = instrumentService.listInstruments(page, pageSize);
-        return ResponseEntity.status(200).body(new ApiResponse(200, "", instruments));
+        if ((page.isPresent() && page.get() <= 0) || (page.isPresent() && pageSize.get() <= 0)) {
+            return ResponseEntity.status(400).body(new ApiResponse(400, "Invalid parameters"));
+        }
+        if (page.isPresent() && pageSize.isPresent()) {
+            List<Instrument> instruments = instrumentService.listInstruments(page.get(), pageSize.get());
+            return ResponseEntity.status(200).body(new ApiResponse(200, "", instruments));
+        }
+        return ResponseEntity.status(400).body(new ApiResponse(400, "Invalid parameters"));
     }
 
     @GetMapping(value = "{id}")

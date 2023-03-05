@@ -7,7 +7,9 @@ import com.t212.cfdaccounts.cfdaccounts.api.rest.models.ApiResponse;
 import com.t212.cfdaccounts.cfdaccounts.serviceclient.models.InstrumentWithPrice;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
@@ -31,7 +33,16 @@ public class InstrumentClient {
         this.objectMapper = objectMapper;
     }
 
-    public Map<String, InstrumentWithPrice> getInstruments() throws JsonProcessingException {
+    public List<InstrumentWithPrice> getAllInstruments() throws JsonProcessingException, DataAccessException {
+        ApiResponse response = restTemplate.getForObject(instrumentPricesURL, ApiResponse.class);
+        Map<String, InstrumentWithPrice> instrumentPrices = new ConcurrentHashMap<>();
+        String result = objectMapper.writeValueAsString(response.getResult());
+        List<InstrumentWithPrice> instruments = objectMapper.readValue(result, new TypeReference<List<InstrumentWithPrice>>() {
+        });
+        return instruments;
+    }
+
+    public Map<String, InstrumentWithPrice> getInstruments() throws JsonProcessingException, DataAccessException {
         ApiResponse response = restTemplate.getForObject(instrumentPricesURL, ApiResponse.class);
         Map<String, InstrumentWithPrice> instrumentPrices = new ConcurrentHashMap<>();
         String result = objectMapper.writeValueAsString(response.getResult());
@@ -43,7 +54,7 @@ public class InstrumentClient {
         return instrumentPrices;
     }
 
-    public Map<String, InstrumentWithPrice> getMostUsedInstruments() throws JsonProcessingException {
+    public Map<String, InstrumentWithPrice> getMostUsedInstruments() throws JsonProcessingException, ResourceAccessException {
         ApiResponse response = restTemplate.getForObject(mostUsedInstrumentsURL, ApiResponse.class);
         Map<String, InstrumentWithPrice> mostUsedInstruments = new ConcurrentHashMap<>();
         String result = objectMapper.writeValueAsString(response.getResult());
@@ -53,5 +64,13 @@ public class InstrumentClient {
             mostUsedInstruments.put(i.ticker, i);
         }
         return mostUsedInstruments;
+    }
+
+    public InstrumentWithPrice getInstrumentWithPrice(String ticker) throws JsonProcessingException, ResourceAccessException {
+        ApiResponse response = restTemplate.getForObject(instrumentPricesURL + "/" + ticker, ApiResponse.class);
+        String result = objectMapper.writeValueAsString(response.getResult());
+        InstrumentWithPrice instrument = objectMapper.readValue(result, new TypeReference<InstrumentWithPrice>() {
+        });
+        return instrument;
     }
 }

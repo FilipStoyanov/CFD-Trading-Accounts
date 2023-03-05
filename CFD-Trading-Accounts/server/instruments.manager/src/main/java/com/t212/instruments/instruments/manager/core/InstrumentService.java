@@ -20,10 +20,16 @@ public class InstrumentService {
         this.instrumentRepository = instrumentRepository;
     }
 
-    public Instrument addInstrument(String name, String fullName, BigDecimal quantity, BigDecimal leverage, String marketName) {
-        InstrumentDAO instrument = instrumentRepository.addInstrument(name, fullName, quantity, leverage, marketName);
+    public Instrument addInstrument(String name, String fullName, String ticker, String type, BigDecimal quantity, BigDecimal leverage, String marketName) throws EmptyResultDataAccessException {
+        long typeId = instrumentRepository.getTypeId(type);
+        InstrumentDAO instrument = instrumentRepository.addInstrument(name, fullName, ticker, quantity, leverage, typeId, marketName);
         return Mappers.fromResultSetToInstrument(instrument);
     }
+
+    public List<Instrument> listAllInstruments() throws EmptyResultDataAccessException {
+        return instrumentRepository.listAllInstruments().stream().map(current -> Mappers.fromResultSetToInstrument(current)).collect(Collectors.toList());
+    }
+
 
     public Instrument getById(long instrumentId) throws EmptyResultDataAccessException {
         InstrumentDAO instrument = instrumentRepository.getInstrument(instrumentId);
@@ -36,6 +42,14 @@ public class InstrumentService {
 
     public List<InstrumentWithPrice> getInstrumentsWithPrices() throws EmptyResultDataAccessException {
         return instrumentRepository.getAllInstrumentsWithInitialPrice().stream().map(current -> Mappers.fromResultSetToInstrumentWithPrice(current)).collect(Collectors.toList());
+    }
+
+    public List<InstrumentWithPrice> getPaginatedInstrumentsWithPrices(Integer page, Integer pageSize) throws EmptyResultDataAccessException {
+        return instrumentRepository.getPaginatedInstrumentsWithPrices(page, pageSize).stream().map(current -> Mappers.fromResultSetToInstrumentWithPrice(current)).collect(Collectors.toList());
+    }
+
+    public InstrumentWithPrice getInstrumentWithPrice(String ticker) throws EmptyResultDataAccessException {
+        return Mappers.fromResultSetToInstrumentWithPrice(instrumentRepository.getInstrumentWithInitialPrice(ticker));
     }
 
     public boolean removeInstrument(long instrumentId) throws DataAccessException {

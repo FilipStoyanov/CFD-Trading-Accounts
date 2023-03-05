@@ -1,29 +1,5 @@
 version: "3"
 services:
-  redis:
-    image: redis:latest
-    container_name: redis-master
-    ports:
-      - "6379:6379"
-
-  redis-slave1:
-    image: redis:latest
-    container_name: redis-slave1
-    ports:
-      - "6380:6379"
-    command: redis-server --slaveof redis-master 6379
-    depends_on:
-      - redis
-
-  redis-slave2:
-    image: redis:latest
-    container_name: redis-slave2
-    ports:
-      - "6381:6379"
-    command: redis-server --slaveof redis-master 6379
-    depends_on:
-      - redis
-
   mariadb:
     build:
       dockerfile: DockerFile
@@ -32,10 +8,175 @@ services:
     ports:
       - 3306:3306
     environment:
-      MARIADB_USERNAME: root
       MARIADB_ROOT_PASSWORD: 123456789
     volumes:
       - C:\Dockerfile\db-on-docker-ms:/var/lib/mariadb
+
+  stocks:
+    container_name: stocks
+    build:
+      dockerfile: DockerFile_cfd_accounts
+    ports:
+      - 8080:8080
+    depends_on:
+      - mariadb
+      - instruments
+      - positions
+      - accountbalance
+      - kafka
+    environment: 
+      - DB_URL=jdbc:mariadb://mdb:3306/cfd
+      - TOP_INSTRUMENTS_URL=http://instruments:8083/api/v1/instruments/most-used
+      - INSTRUMENTS_URL=http://instruments:8083/api/v1/instruments-prices
+      - POSITIONS_URL=http://positions:8082/api/v1/users/
+      - BALANCE_URL=http://accountbalance:8085/api/v1/users/
+      - KAFKA_URL=kafka:9092
+
+  indices:
+    container_name: indices
+    build:
+      dockerfile: DockerFile_cfd_accounts
+    ports:
+      - 8081:8080
+    depends_on:
+      - mariadb
+      - instruments
+      - positions
+      - accountbalance
+      - kafka
+    environment: 
+      - DB_URL=jdbc:mariadb://mdb:3306/cfd
+      - TOP_INSTRUMENTS_URL=http://instruments:8083/api/v1/instruments/most-used
+      - INSTRUMENTS_URL=http://instruments:8083/api/v1/instruments-prices
+      - POSITIONS_URL=http://positions:8082/api/v1/users/
+      - BALANCE_URL=http://accountbalance:8085/api/v1/users/
+      - KAFKA_URL=kafka:9092
+
+  crypto:
+    container_name: crypto
+    build:
+      dockerfile: DockerFile_cfd_accounts
+    ports:
+      - 8086:8080
+    depends_on:
+      - mariadb
+      - instruments
+      - positions
+      - accountbalance
+      - kafka
+    environment: 
+      - DB_URL=jdbc:mariadb://mdb:3306/cfd
+      - TOP_INSTRUMENTS_URL=http://instruments:8083/api/v1/instruments/most-used
+      - INSTRUMENTS_URL=http://instruments:8083/api/v1/instruments-prices
+      - POSITIONS_URL=http://positions:8082/api/v1/users/
+      - BALANCE_URL=http://accountbalance:8085/api/v1/users/
+      - KAFKA_URL=kafka:9092
+
+  commodities:
+    container_name: commodities
+    build:
+      dockerfile: DockerFile_cfd_accounts
+    ports:
+      - 8088:8080
+    depends_on:
+      - mariadb
+      - instruments
+      - positions
+      - accountbalance
+      - kafka
+    environment:
+      - DB_URL=jdbc:mariadb://mdb:3306/cfd
+      - TOP_INSTRUMENTS_URL=http://instruments:8083/api/v1/instruments/most-used
+      - INSTRUMENTS_URL=http://instruments:8083/api/v1/instruments-prices
+      - POSITIONS_URL=http://positions:8082/api/v1/users/
+      - BALANCE_URL=http://accountbalance:8085/api/v1/users/
+      - KAFKA_URL=kafka:9092
+
+  currencies:
+    container_name: currencies
+    build:
+      dockerfile: DockerFile_cfd_accounts
+    ports:
+      - 8089:8080
+    depends_on:
+      - mariadb
+      - instruments
+      - positions
+      - accountbalance
+      - kafka
+    environment: 
+      - DB_URL=jdbc:mariadb://mdb:3306/cfd
+      - TOP_INSTRUMENTS_URL=http://instruments:8083/api/v1/instruments/most-used
+      - INSTRUMENTS_URL=http://instruments:8083/api/v1/instruments-prices
+      - POSITIONS_URL=http://positions:8082/api/v1/users/
+      - BALANCE_URL=http://accountbalance:8085/api/v1/users/
+      - KAFKA_URL=kafka:9092
+
+  accountbalance: 
+    container_name: accountbalance
+    build:
+      dockerfile: DockerFile_account_balance
+    ports:
+      - 8085:8085
+    depends_on:
+      - mariadb
+      - kafka
+    environment: 
+      - DB_URL=jdbc:mariadb://mdb:3306/cfd
+      - KAFKA_URL=kafka:9092
+
+  auth: 
+    container_name: auth
+    build:
+      dockerfile: DockerFile_auth
+    ports:
+      - 8084:8084
+    depends_on:
+      - mariadb
+      - kafka
+    environment: 
+      - DB_URL=jdbc:mariadb://mdb:3306/cfd
+      - KAFKA_URL=kafka:9092
+
+  instruments: 
+    container_name: instruments
+    build:
+      dockerfile: DockerFile_instruments
+    ports:
+      - 8083:8083
+    depends_on:
+      - mariadb
+      - kafka
+    environment: 
+      - DB_URL=jdbc:mariadb://mdb:3306/cfd
+      - KAFKA_URL=kafka:9092
+
+  positions: 
+    container_name: positions
+    build:
+      dockerfile: DockerFile_positions
+    ports:
+      - 8082:8082
+    depends_on:
+      - mariadb
+      - kafka
+    environment: 
+      - DB_URL=jdbc:mariadb://mdb:3306/cfd
+      - KAFKA_URL=kafka:9092
+  
+  producer:
+    container_name: producer
+    build:
+      dockerfile: DockerFile_producer
+    environment:
+      - DB_URL=jdbc:mariadb://mdb:3306/cfd
+      - KAFKA_URL=kafka:9092
+      - INSTRUMENTS_URL=http://instruments:8083/api/v1/instruments-prices
+    depends_on:
+      - instruments
+      - kafka
+    ports:
+      - 8090:8090
 
   zookeeper:
     image: bitnami/zookeeper:latest
@@ -47,13 +188,28 @@ services:
 
   kafka:
     image: bitnami/kafka:latest
+    container_name: kafka
     environment:
       KAFKA_BROKER_ID: 1
       ALLOW_PLAINTEXT_LISTENER: yes
       KAFKA_CFG_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_CFG_LISTENERS: PLAINTEXT://:9092
-      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
     ports:
       - 9092:9092
     depends_on:
       - zookeeper
+  
+  haproxy:
+    image: haproxy:alpine
+    ports:
+      - "8079:8079"
+      - "443:443"
+      - "8404:8404"
+    volumes:
+      - ./templates/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+      - "./templates/cors.lua:/etc/haproxy/cors.lua"
+
+networks:
+  backend:
+    driver: bridge

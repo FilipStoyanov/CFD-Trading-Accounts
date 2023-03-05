@@ -10,7 +10,7 @@ const Header = ({ cash }) => {
       <Grid container item xs={6} justifyContent={"space-evenly"}>
         <Grid item sx={{display: "flex"}}>
           <Typography sx={styles.account}>Account value</Typography>
-          <Typography pl={1} sx={styles.amount}>{localStorage.getItem("cash")} $</Typography>
+          <Typography pl={1} sx={styles.amount}>{cash} $</Typography>
         </Grid>
         <Grid item sx={{display: "flex"}}>
         <Typography sx={styles.account}>Hello, </Typography>

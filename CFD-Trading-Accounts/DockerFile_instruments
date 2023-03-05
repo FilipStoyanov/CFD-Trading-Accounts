@@ -1,0 +1,4 @@
+FROM openjdk:17
+EXPOSE 8083
+ADD /server/instruments.manager/target/instruments.jar instruments.jar
+ENTRYPOINT ["java", "-jar", "instruments.jar", "--server-port=8083"]

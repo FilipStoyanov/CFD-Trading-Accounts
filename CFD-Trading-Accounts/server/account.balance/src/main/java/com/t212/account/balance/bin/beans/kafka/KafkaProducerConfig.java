@@ -1,6 +1,5 @@
 package com.t212.account.balance.bin.beans.kafka;
 
-
 import com.t212.account.balance.events.AccountBalanceSerializer;
 import com.t212.account.balance.events.AccountBalanceUpdaterEvent;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -12,7 +11,6 @@ import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
-
 import java.util.HashMap;
 import java.util.Map;
 

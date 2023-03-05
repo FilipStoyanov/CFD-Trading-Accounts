@@ -8,6 +8,7 @@ import java.util.List;
 
 public interface AccountPositionRepository {
     List<AccountPositionDAO> getPositions(long userId);
+
     List<AccountPositionsWithPricesDAO> getPositionsWithCurrentPrices(long userId);
 
     List<AccountPositionDAO> getClosePositions(long userId);
@@ -19,4 +20,6 @@ public interface AccountPositionRepository {
     AccountPositionDAO getUpdatedPositionById(long userId, long instrumentId, String type);
 
     AccountPositionDAO addPositionToUser(long userId, long instrumentId, BigDecimal quantity, String type, BigDecimal buyPrice, BigDecimal sellPrice);
+
+    List<String> getAllTypesOfPositions(long userId);
 }

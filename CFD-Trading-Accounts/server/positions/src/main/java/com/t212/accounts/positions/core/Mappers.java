@@ -18,6 +18,6 @@ public class Mappers {
     }
 
     public static OpenPositionOutput fromResultSetToOpenPosition(AccountPositionDAO position) {
-        return new OpenPositionOutput(position.userId, position.ticker, position.quantity, position.type, position.buyPrice, position.sellPrice, position.createdAt, position.updatedAt);
+        return new OpenPositionOutput(position.ticker, position.quantity, position.type, position.buyPrice, position.sellPrice, position.createdAt, position.updatedAt);
     }
 }

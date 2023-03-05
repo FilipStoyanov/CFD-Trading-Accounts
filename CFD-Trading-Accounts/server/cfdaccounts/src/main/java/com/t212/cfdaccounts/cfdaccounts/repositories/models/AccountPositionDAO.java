@@ -35,15 +35,4 @@ public class AccountPositionDAO {
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
-
-    public AccountPositionDAO(long userId, String ticker, BigDecimal quantity, String type, BigDecimal buyPrice, BigDecimal sellPrice, Date date) {
-        this.userId = userId;
-        this.ticker = ticker;
-        this.quantity = quantity;
-        this.type = type;
-        this.buyPrice = buyPrice;
-        this.sellPrice = sellPrice;
-        this.createdAt = date;
-        this.updatedAt = date;
-    }
 }

@@ -1,7 +1,6 @@
 create database if not exists cfd;
 use cfd;
 
-
 create table if not exists `users`(
  id int primary key not null auto_increment,
  username varchar(255) unique not null,
@@ -25,6 +24,13 @@ create table if not exists `account_cash` (
  index(user_id)
 );
 
+
+create table if not exists `instrument_type` (
+    id int not null auto_increment,
+    name enum("stock", "index", "crypto", "currency", "commodities"),
+    constraint PK_INSTRUMENT_TYPE primary key(id)
+);
+
 create table if not exists `instruments` (
 	id int not null auto_increment,
     name varchar(255) unique,
@@ -33,10 +39,12 @@ create table if not exists `instruments` (
     min_quantity decimal(19,2) not null,
     leverage decimal(19,10),
 	market_name varchar(255),
+    type_id int not null,
     created_at datetime default current_timestamp,
     updated_at datetime default current_timestamp,
 	isDeleted boolean default false,
-    constraint PK_INSTRUMENT primary key(id)
+    constraint PK_INSTRUMENT primary key(id),
+    constraint FK_INSTRUMENT foreign key(type_id) references `instrument_type`(id) on delete cascade
 );
 
 create table if not exists `account_positions` (
@@ -54,13 +62,6 @@ create table if not exists `account_positions` (
     constraint PK_ACCOUNT_POSITIONS primary key(id),
     constraint FK_POSITION_TO_USER foreign key(user_id) references users(id) on delete cascade,
     constraint FK_POSITION_TO_INSTRUMENT foreign key(instrument_id) references instruments(id) on delete cascade
-);
-
-create table if not exists `payments_webhook` (
-    webhook_id int not null unique,
-    created_at datetime default current_timestamp,
-    updated_at datetime default current_timestamp,
-    constraint PK_PAYMENTS_WEBHOOK primary key(webhook_id)
 );
 
 create table if not exists `instrument_prices` (

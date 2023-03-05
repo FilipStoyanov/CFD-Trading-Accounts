@@ -1,5 +1,6 @@
 package com.t212.instruments.instruments.manager.repositories.mariadb;
 
+import com.t212.instruments.instruments.manager.core.models.InstrumentWithPrice;
 import com.t212.instruments.instruments.manager.repositories.InstrumentRepository;
 import com.t212.instruments.instruments.manager.repositories.models.InstrumentDAO;
 import com.t212.instruments.instruments.manager.repositories.models.InstrumentWithPricesDAO;
@@ -32,7 +33,7 @@ public class MariaDBInstrumentRepository implements InstrumentRepository {
     }
 
     @Override
-    public InstrumentDAO addInstrument(String name, String fullName, BigDecimal minQuantity, BigDecimal leverage, String marketName) {
+    public InstrumentDAO addInstrument(String name, String fullName, String ticker, BigDecimal minQuantity, BigDecimal leverage, long typeId, String marketName) {
         return txTemplate.execute(status -> {
             try {
                 KeyHolder keyholder = new GeneratedKeyHolder();
@@ -40,9 +41,11 @@ public class MariaDBInstrumentRepository implements InstrumentRepository {
                     PreparedStatement ps = conn.prepareStatement(InstrumentQueries.INSERT_INSTRUMENT, Statement.RETURN_GENERATED_KEYS);
                     ps.setString(1, name);
                     ps.setString(2, fullName);
-                    ps.setBigDecimal(3, minQuantity);
-                    ps.setBigDecimal(4, leverage);
-                    ps.setString(5, marketName);
+                    ps.setString(3, ticker);
+                    ps.setBigDecimal(4, minQuantity);
+                    ps.setBigDecimal(5, leverage);
+                    ps.setLong(6, typeId);
+                    ps.setString(7, marketName);
                     return ps;
                 }, keyholder);
                 int id = Objects.requireNonNull(keyholder.getKey()).intValue();
@@ -74,7 +77,7 @@ public class MariaDBInstrumentRepository implements InstrumentRepository {
     }
 
     @Override
-    public List<InstrumentDAO> listAllInstruments() {
+    public List<InstrumentDAO> listAllInstruments() throws EmptyResultDataAccessException {
         return jdbc.query(InstrumentQueries.LIST_ALL_INSTRUMENTS, (rs, rowNum) -> fromResultSetToInstrument(rs));
     }
 
@@ -84,8 +87,23 @@ public class MariaDBInstrumentRepository implements InstrumentRepository {
     }
 
     @Override
+    public InstrumentWithPricesDAO getInstrumentWithInitialPrice(String ticker) {
+        return jdbc.queryForObject(InstrumentQueries.GET_INSTRUMENT_WITH_INITIAL_PRICE, (rs, rowNum) -> fromResultSetToInstrumentWithPrices(rs), ticker);
+    }
+
+    @Override
     public List<InstrumentWithPricesDAO> getTop10Instruments() throws EmptyResultDataAccessException {
         return jdbc.query(InstrumentQueries.GET_TOP_10_INSTRUMENTS, (rs, rowNum) -> fromResultSetToInstrumentWithPrices(rs));
+    }
+
+    @Override
+    public List<InstrumentWithPricesDAO> getPaginatedInstrumentsWithPrices(Integer page, Integer pageSize) {
+        return jdbc.query(InstrumentQueries.GET_INSTRUMENTS_WITH_PAGINATION, (rs, rowNum) -> fromResultSetToInstrumentWithPrices(rs), page*pageSize, pageSize);
+    }
+
+    @Override
+    public long getTypeId(String type) throws EmptyResultDataAccessException {
+        return jdbc.queryForObject(InstrumentQueries.GET_TYPE_ID, (rs, rowNum) -> rs.getLong("id"), type);
     }
 
     private static InstrumentDAO fromResultSetToInstrument(ResultSet rs) throws SQLException {
@@ -94,6 +112,7 @@ public class MariaDBInstrumentRepository implements InstrumentRepository {
                 rs.getString("name"),
                 rs.getString("ticker"),
                 rs.getString("fullname"),
+                rs.getString("type"),
                 rs.getBigDecimal("min_quantity"),
                 rs.getBigDecimal("leverage"),
                 rs.getString("market_name"),
@@ -110,6 +129,7 @@ public class MariaDBInstrumentRepository implements InstrumentRepository {
                 rs.getString("fullname"),
                 rs.getBigDecimal("min_quantity"),
                 rs.getBigDecimal("leverage"),
+                rs.getString("type"),
                 rs.getString("market_name"),
                 rs.getBigDecimal("buy"),
                 rs.getBigDecimal("sell"),
