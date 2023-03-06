@@ -87,8 +87,8 @@ public class MariaDBInstrumentRepository implements InstrumentRepository {
     }
 
     @Override
-    public InstrumentWithPricesDAO getInstrumentWithInitialPrice(String ticker) {
-        return jdbc.queryForObject(InstrumentQueries.GET_INSTRUMENT_WITH_INITIAL_PRICE, (rs, rowNum) -> fromResultSetToInstrumentWithPrices(rs), ticker);
+    public InstrumentWithPricesDAO getInstrumentWithInitialPrice(long id) {
+        return jdbc.queryForObject(InstrumentQueries.GET_INSTRUMENT_WITH_INITIAL_PRICE, (rs, rowNum) -> fromResultSetToInstrumentWithPrices(rs), id);
     }
 
     @Override
@@ -99,6 +99,11 @@ public class MariaDBInstrumentRepository implements InstrumentRepository {
     @Override
     public List<InstrumentWithPricesDAO> getPaginatedInstrumentsWithPrices(Integer page, Integer pageSize) {
         return jdbc.query(InstrumentQueries.GET_INSTRUMENTS_WITH_PAGINATION, (rs, rowNum) -> fromResultSetToInstrumentWithPrices(rs), page*pageSize, pageSize);
+    }
+
+    @Override
+    public List<InstrumentWithPricesDAO> getInstrumentsPricesWithOffset(Integer offset, Integer numberOfRows) {
+        return jdbc.query(InstrumentQueries.GET_INSTRUMENTS_WITH_PAGINATION, (rs, rowNum) -> fromResultSetToInstrumentWithPrices(rs), offset, numberOfRows);
     }
 
     @Override

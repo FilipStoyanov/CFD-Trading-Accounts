@@ -1,4 +1,4 @@
-import * as React from "react";
+import React, {useState, useEffect} from "react";
 import PropTypes from "prop-types";
 import { alpha } from "@mui/material/styles";
 import Box from "@mui/material/Box";
@@ -13,9 +13,11 @@ import TableSortLabel from "@mui/material/TableSortLabel";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import Paper from "@mui/material/Paper";
-import Checkbox from "@mui/material/Checkbox";
-import FilterListIcon from "@mui/icons-material/FilterList";
+import CancelIcon from '@mui/icons-material/Cancel';
 import { visuallyHidden } from "@mui/utils";
+import { useSelector } from "react-redux";
+import {IconButton} from "@mui/material";
+import { closeMarketPosition } from "../../requests";
 
 function createData(
   ticker,
@@ -108,6 +110,12 @@ const headCells = [
     disablePadding: false,
     label: "RESULT",
   },
+  {
+    id: "close", 
+    numeric: false,
+    disablePadding: false,
+    label: "",
+  }
 ];
 
 function EnhancedTableHead(props) {
@@ -207,18 +215,29 @@ EnhancedTableToolbar.propTypes = {
   numSelected: PropTypes.number.isRequired,
 };
 
-export default function PositionsTable({ rows }) {
+export default function PositionsTable({ rows, setRow, setData }) {
   const [order, setOrder] = React.useState("asc");
   const [orderBy, setOrderBy] = React.useState("quantity");
   const [selected, setSelected] = React.useState([]);
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
+  const [chosenRow, setChosenRow] = useState();
+  const user = useSelector((state) => state.user.user);
 
   const handleRequestSort = (event, property) => {
     const isAsc = orderBy === property && order === "asc";
     setOrder(isAsc ? "desc" : "asc");
     setOrderBy(property);
   };
+
+  const closePosition = async (position) => {
+    const res = await closeMarketPosition(position, user.id);
+    if(res.status === 200) {
+      const filteredData = [...rows.filter(item => (item.ticker != position.ticker || item.type != position.type ))];
+      console.log(filteredData);
+      setData(filteredData);
+    }
+  }
 
   const handleSelectAllClick = (event) => {
     if (event.target.checked) {
@@ -249,7 +268,7 @@ export default function PositionsTable({ rows }) {
         <EnhancedTableToolbar numSelected={selected.length} />
         <TableContainer>
           <Table
-            sx={[styles.table, { minWidth: 750, padding: "0px 18px"}]}
+            sx={[styles.table, { minWidth: 750, padding: "0px 18px", overflow: "hidden"}]}
             aria-labelledby="tableTitle"
             size={"small"}
           >
@@ -268,10 +287,11 @@ export default function PositionsTable({ rows }) {
                   return (
                     <TableRow
                       hover
-                      onClick={(event) => {}}
+                      onClick={() => { setChosenRow(row.ticker); setRow(row.ticker) } }
                       role="checkbox"
                       tabIndex={-1}
                       key={row.ticker + "_" + row.type}
+                      sx = {styles.row}
                     >
                       <TableCell
                         component="th"
@@ -289,10 +309,15 @@ export default function PositionsTable({ rows }) {
                         {row.currentPrice.toFixed(2)}
                       </TableCell>
                       <TableCell align="right">
-                        {row.margin.toFixed(2)}
+                        {row.margin ? row.margin.toFixed(2) : ""}
                       </TableCell>
                       <TableCell align="right" sx={row.result < 0 ? {color: "#fa6464"} : {color: "#3f3f3f"}}>
-                        {row.result.toFixed(2)}
+                        {row.result ? row.result.toFixed(2) : ""}
+                      </TableCell>
+                      <TableCell>
+                        <IconButton sx = {styles.close} onClick = {(e) => {e.stopPropagation(); closePosition(row)}}>
+                        <CancelIcon />
+                        </IconButton>
                       </TableCell>
                     </TableRow>
                   );
@@ -338,5 +363,13 @@ const styles = {
     "&.MuiTable-root": {
       borderCollapse: "unset",
     },
+  },
+  row: {
+    position: "relative",
+  },
+  close: {
+    position: "absolute",
+    top: -2,
+    right: 0
   }
 }

@@ -40,9 +40,9 @@ public class MariaDBPositionRepository implements AccountPositionRepository {
     }
 
     @Override
-    public AccountPositionDAO updatePosition(long userId, long instId, String type) throws EmptyResultDataAccessException {
-        jdbc.update(PositionsQueries.UPDATE_POSITION, userId, instId, type);
-        return getUpdatedPositionById(userId, instId, type);
+    public AccountPositionDAO updatePosition(long userId, String ticker, String type) throws EmptyResultDataAccessException {
+        jdbc.update(PositionsQueries.UPDATE_POSITION, userId, ticker, type);
+        return getUpdatedPositionById(userId, ticker, type);
     }
 
     @Override
@@ -51,8 +51,8 @@ public class MariaDBPositionRepository implements AccountPositionRepository {
     }
 
     @Override
-    public AccountPositionDAO getUpdatedPositionById(long userId, long instrumentId, String type) throws EmptyResultDataAccessException {
-        return jdbc.queryForObject(PositionsQueries.GET_UPDATED_POSITION_BY_ID, (rs, rowNum) -> fromResultSetToPosition(rs), userId, instrumentId, type);
+    public AccountPositionDAO getUpdatedPositionById(long userId, String ticker, String type) throws EmptyResultDataAccessException {
+        return jdbc.queryForObject(PositionsQueries.GET_UPDATED_POSITION_BY_ID, (rs, rowNum) -> fromResultSetToPosition(rs), userId, ticker, type);
     }
 
     @Override
@@ -77,7 +77,8 @@ public class MariaDBPositionRepository implements AccountPositionRepository {
                 rs.getBoolean("is_closed"),
                 rs.getDate("created_at"),
                 rs.getDate("updated_at"),
-                rs.getDate("deleted_at")
+                rs.getDate("deleted_at"),
+                rs.getString("ticker_type")
         );
     }
 

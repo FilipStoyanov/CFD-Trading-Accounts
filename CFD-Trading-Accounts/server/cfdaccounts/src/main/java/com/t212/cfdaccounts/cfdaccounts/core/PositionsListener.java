@@ -84,7 +84,7 @@ public class PositionsListener {
                 List<AccountPositionDAO> openPositionsForCurrentUser = positionClient.getOpenPositions(record.value().userId());
                 Map<String, AccountPositionDAO> mapOfOpenPositions = new ConcurrentHashMap<>();
                 for (AccountPositionDAO p : openPositionsForCurrentUser) {
-                    mapOfOpenPositions.put(p.ticker, p);
+                    mapOfOpenPositions.put(p.ticker(), p);
                 }
                 userPositions.put(record.value().userId(), mapOfOpenPositions);
             } catch (JsonProcessingException e) {

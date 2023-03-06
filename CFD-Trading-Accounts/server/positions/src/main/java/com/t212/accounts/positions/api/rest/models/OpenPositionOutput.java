@@ -5,5 +5,5 @@ import java.sql.Date;
 
 public record OpenPositionOutput(String ticker, BigDecimal quantity, String type,
                                  BigDecimal buyPrice,
-                                 BigDecimal sellPrice, Date createdAt, Date updatedAt) {
+                                 BigDecimal sellPrice, Date createdAt, Date updatedAt, String tickerType) {
 }

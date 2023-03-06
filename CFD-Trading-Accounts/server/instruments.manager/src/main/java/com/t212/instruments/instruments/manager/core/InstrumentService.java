@@ -48,8 +48,12 @@ public class InstrumentService {
         return instrumentRepository.getPaginatedInstrumentsWithPrices(page, pageSize).stream().map(current -> Mappers.fromResultSetToInstrumentWithPrice(current)).collect(Collectors.toList());
     }
 
-    public InstrumentWithPrice getInstrumentWithPrice(String ticker) throws EmptyResultDataAccessException {
-        return Mappers.fromResultSetToInstrumentWithPrice(instrumentRepository.getInstrumentWithInitialPrice(ticker));
+    public List<InstrumentWithPrice> getInstrumentsPricesWithOffset(Integer offset, Integer numberOfRows) throws EmptyResultDataAccessException {
+        return instrumentRepository.getInstrumentsPricesWithOffset(offset, numberOfRows).stream().map(current -> Mappers.fromResultSetToInstrumentWithPrice(current)).collect(Collectors.toList());
+    }
+
+    public InstrumentWithPrice getInstrumentWithPrice(long id) throws EmptyResultDataAccessException {
+        return Mappers.fromResultSetToInstrumentWithPrice(instrumentRepository.getInstrumentWithInitialPrice(id));
     }
 
     public boolean removeInstrument(long instrumentId) throws DataAccessException {

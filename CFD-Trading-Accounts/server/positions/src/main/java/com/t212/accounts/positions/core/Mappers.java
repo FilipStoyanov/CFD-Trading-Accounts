@@ -9,7 +9,7 @@ import com.t212.accounts.positions.repositories.models.AccountPositionsWithPrice
 public class Mappers {
     public static Position fromResultSetToPosition(AccountPositionDAO position) {
         return new Position(position.ticker, position.quantity, position.type, position.buyPrice, position.sellPrice,
-                position.isClosed, position.createdAt, position.updatedAt);
+                position.isClosed, position.createdAt, position.updatedAt, position.tickerType);
     }
 
     public static PositionWithPrices fromResultSetToPositionWithPrices(AccountPositionsWithPricesDAO position) {
@@ -18,6 +18,6 @@ public class Mappers {
     }
 
     public static OpenPositionOutput fromResultSetToOpenPosition(AccountPositionDAO position) {
-        return new OpenPositionOutput(position.ticker, position.quantity, position.type, position.buyPrice, position.sellPrice, position.createdAt, position.updatedAt);
+        return new OpenPositionOutput(position.ticker, position.quantity, position.type, position.buyPrice, position.sellPrice, position.createdAt, position.updatedAt, position.tickerType);
     }
 }

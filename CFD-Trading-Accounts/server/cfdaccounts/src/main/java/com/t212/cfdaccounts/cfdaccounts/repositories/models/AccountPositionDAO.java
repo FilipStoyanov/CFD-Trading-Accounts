@@ -6,16 +6,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.math.BigDecimal;
 import java.sql.Date;
 
-public class AccountPositionDAO {
-    public final long userId;
-    public final String ticker;
-    public final BigDecimal quantity;
-    public final String type;
-    public final BigDecimal buyPrice;
-    public final BigDecimal sellPrice;
-    public final Date createdAt;
-    public final Date updatedAt;
-
+public record AccountPositionDAO(long userId, String ticker, BigDecimal quantity, String type, BigDecimal buyPrice,
+                                 BigDecimal sellPrice, Date createdAt, Date updatedAt) {
     @JsonCreator
     public AccountPositionDAO(
             @JsonProperty("userId") long userId,

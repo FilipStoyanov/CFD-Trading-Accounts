@@ -41,8 +41,8 @@ public class PositionsService {
         return Mappers.fromResultSetToPosition(position);
     }
 
-    public Position updatePosition(long userId, long instrumentId, String type) {
-        AccountPositionDAO position = positionRepository.updatePosition(userId, instrumentId, type);
+    public Position updatePosition(long userId, String ticker, String type) {
+        AccountPositionDAO position = positionRepository.updatePosition(userId, ticker, type);
         return Mappers.fromResultSetToPosition(position);
     }
 }

@@ -1,4 +1,5 @@
 import axios from "axios";
+import PositionsTable from "../components/positions-table/PositionsTable";
 
 const API_USERS_ENDPOINT = "http://localhost:8082/api/v1/users";
 const API_LOGIN_ENDPOINT = "http://localhost:8084/api/v1/login";
@@ -22,9 +23,69 @@ export const getTypesOfOpenPositions = (user) => {
   )
 }
 
-export const getInstrumentsWithPagination = (page) => {
+export const getInstrumentsWithPagination = (page, pageSize) => {
   return axios.get(
-    `${API_INSTRUMENTS}?page=${page}&pageSize=10`,
+    `${API_INSTRUMENTS}?page=${page}&pageSize=${pageSize}`,
+    {
+      headers: {
+        "Content-Type": "application/json",
+      }
+    }
+  )
+}
+
+export const getGraphicDataForInstrument = (instrumentId) => {
+  return axios.get(
+    `${API_INSTRUMENTS}/${instrumentId}`,
+    {
+      headers: {
+        "Content-Type": "application/json"
+      }
+    }
+  )
+}
+
+export const openMarketPosition = (position, userId) => {
+  return axios.post(
+    `${API_USERS_ENDPOINT}/${userId}/positions`,
+    {
+      instrumentId: position.id,
+      quantity: position.quantity,
+      type: position.positionType,
+      buyPrice: parseFloat(position.buyPrice),
+      sellPrice: parseFloat(position.sellPrice)
+    },
+    {
+      headers: {
+        "Content-Type": "application/json",
+      }
+    }
+  )
+}
+
+export const closeMarketPosition = (position, userId) => {
+  const sell = position.type === 'SHORT' ? position.price : position.currentPrice;
+  const buy = position.type === 'LONG' ? position.currentPrice : position.price;
+  return axios.put(
+    `${API_USERS_ENDPOINT}/${userId}/positions`,
+    {
+      ticker: position.ticker,
+      quantity: position.quantity,
+      buyPrice: parseFloat(buy),
+      sellPrice: parseFloat(sell),
+      positionType: position.type,
+    },
+    {
+      headers: {
+        "Content-Type": "application/json",
+      }
+    }
+  )
+}
+
+export const getInstrumentsWithOffset = (offset, rows) => {
+  return axios.get(
+    `${API_INSTRUMENTS}?offset=${offset}&rows=${rows}`,
     {
       headers: {
         "Content-Type": "application/json",

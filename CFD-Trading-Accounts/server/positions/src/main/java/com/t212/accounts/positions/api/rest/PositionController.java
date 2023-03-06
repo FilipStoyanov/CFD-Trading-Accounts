@@ -83,19 +83,19 @@ public class PositionController {
         }
     }
 
-    @PutMapping(value = "{userId}/positions/{positionId}")
-    public ResponseEntity<ApiResponse> updatePosition(@PathVariable long userId, @PathVariable long positionId, @RequestBody PositionUpdateInput positionUpdate) {
-        if (userId < 1 || positionId < 1) {
+    @PutMapping(value = "{userId}/positions")
+    public ResponseEntity<ApiResponse> updatePosition(@PathVariable long userId, @RequestBody PositionUpdateInput positionUpdate) {
+        if (userId < 1) {
             return ResponseEntity.status(400).body(new ApiResponse(400, "Invalid path variable"));
         }
-        try {
-            Position updatedPosition = positionsService.updatePosition(userId, positionId, positionUpdate.positionType());
+//        try {
+            Position updatedPosition = positionsService.updatePosition(userId, positionUpdate.ticker(), positionUpdate.positionType());
             ClosePositionEvent pEvent = new ClosePositionEvent(userId, updatedPosition.ticker, positionUpdate.positionType(), positionUpdate.quantity(), positionUpdate.buyPrice(), positionUpdate.sellPrice(), System.currentTimeMillis());
             kafkaGateway.sendClosePositionEvent(pEvent);
             return ResponseEntity.status(200).body(new ApiResponse(200, "Successfully updated", updatedPosition));
-        } catch (DataAccessException e) {
-            return ResponseEntity.status(400).body(new ApiResponse(400, "Not successfully updated"));
-        }
+//        } catch (DataAccessException e) {
+//            return ResponseEntity.status(400).body(new ApiResponse(400, "Not successfully updated"));
+//        }
     }
 
     @PostMapping(value = "{userId}/positions")

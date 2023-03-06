@@ -31,7 +31,6 @@ public class InstrumentClient {
         String result = objectMapper.writeValueAsString(response.getResult());
         List<Instrument> instrument = objectMapper.readValue(result, new TypeReference<List<Instrument>>() {
         });
-        System.out.println(instrument.size());
         return instrument;
     }
 

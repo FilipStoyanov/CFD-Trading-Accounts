@@ -1,7 +1,6 @@
 package com.t212.cfdaccounts.cfdaccounts.api.websocket;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.t212.cfdaccounts.cfdaccounts.api.websocket.models.ConnectionError;
 import com.t212.cfdaccounts.cfdaccounts.api.websocket.models.WebSocketClient;
 import com.t212.cfdaccounts.cfdaccounts.api.websocket.services.WebSocketService;
@@ -16,7 +15,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
-import org.springframework.messaging.converter.MessageConverter;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -38,13 +36,7 @@ public class PPLAndMarginHandler {
 
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
-
-    @Autowired
-    private MessageConverter messageConverter;
-
-    @Autowired
-    private StockPricesListener stockPricesListener;
-
+    private final StockPricesListener stockPricesListener;
     @Autowired
     private PositionsListener positionsListener;
     private final WebSocketService websocketService;
@@ -55,14 +47,12 @@ public class PPLAndMarginHandler {
 
     private final ExecutorService executorService;
 
-    private final ObjectMapper objectMapper;
-
-    public PPLAndMarginHandler(WebSocketService websocketService, PositionsClient positionClient) {
+    public PPLAndMarginHandler(WebSocketService websocketService, PositionsClient positionClient, StockPricesListener stockPricesListener) {
         this.websocketService = websocketService;
+        this.stockPricesListener = stockPricesListener;
         this.messagesForUsers = new ConcurrentHashMap<>();
         this.positionClient = positionClient;
         executorService = Executors.newFixedThreadPool(6);
-        this.objectMapper = new ObjectMapper();
     }
 
     private Map<String, OpenPositionPPL> calculateOpenPositionsMarginAndPPL(Map<String, AccountPositionDAO> mapOfOpenPositions) {
@@ -70,17 +60,17 @@ public class PPLAndMarginHandler {
         BigDecimal price, currentPrice, spread, result, margin;
         InstrumentWithPrice currentInstrument;
         for (Map.Entry<String, AccountPositionDAO> position : mapOfOpenPositions.entrySet()) {
-            if (stockPricesListener.getInstrumentPrices().containsKey(position.getValue().ticker)) {
-                currentInstrument = stockPricesListener.getInstrumentPrices().get(position.getValue().ticker);
-                price = position.getValue().type.equals("LONG") ? position.getValue().buyPrice : position.getValue().sellPrice;
-                currentPrice = position.getValue().type.equals("LONG") ? currentInstrument.buy : currentInstrument.sell;
+            if (stockPricesListener.getInstrumentPrices().containsKey(position.getValue().ticker())) {
+                currentInstrument = stockPricesListener.getInstrumentPrices().get(position.getValue().ticker());
+                price = position.getValue().type().equals("LONG") ? position.getValue().buyPrice() : position.getValue().sellPrice();
+                currentPrice = position.getValue().type().equals("LONG") ? currentInstrument.buy : currentInstrument.sell;
                 // spread = (buyPrice - sellPrice) * quantity
-                spread = (position.getValue().buyPrice.subtract(position.getValue().sellPrice)).multiply(position.getValue().quantity);
+                spread = (position.getValue().buyPrice().subtract(position.getValue().sellPrice())).multiply(position.getValue().quantity());
                 // result = (currentPrice - price) * quantity + spread
-                result = (currentPrice.subtract(price)).multiply(position.getValue().quantity).add(spread);
+                result = (currentPrice.subtract(price)).multiply(position.getValue().quantity()).add(spread);
                 //margin = ask/bid price * leverage
-                margin = position.getValue().quantity.multiply(currentPrice.multiply(currentInstrument.leverage));
-                openPositionPPL.put(position.getValue().ticker + "_" + position.getValue().type, new OpenPositionPPL(position.getValue().ticker, position.getValue().quantity, position.getValue().type, price, currentPrice, margin, result));
+                margin = position.getValue().quantity().multiply(currentPrice.multiply(currentInstrument.leverage));
+                openPositionPPL.put(position.getValue().ticker() + "_" + position.getValue().type(), new OpenPositionPPL(position.getValue().ticker(), position.getValue().quantity(), position.getValue().type(), price, currentPrice, margin, result));
             }
         }
         return openPositionPPL;

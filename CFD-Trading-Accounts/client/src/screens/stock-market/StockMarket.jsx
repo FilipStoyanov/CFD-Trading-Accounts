@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import PositionsTable from "../../components/positions-table/PositionsTable";
 import { useNavigate } from "react-router-dom";
 import LinearProgressWithLabel from "../../components/progress-bar/LinearProgressWithLabel";
-import { useCookies } from "react-cookie";
 import AlarmAddOutlinedIcon from "@mui/icons-material/AlarmAddOutlined";
 import { useSelector, useDispatch } from "react-redux";
-import { sum, calculateStatus } from "../../utils";
+import { calculateStatus } from "../../utils";
 import Header from "../../components/header/Header";
 import {
   Grid,
@@ -16,7 +15,14 @@ import {
   Modal,
   Button,
 } from "@mui/material";
-import { fetchAccountBalance, getTypesOfOpenPositions, getInstrumentsWithPagination } from "../../requests";
+import {
+  fetchAccountBalance,
+  getTypesOfOpenPositions,
+  getInstrumentsWithPagination,
+  getInstrumentsWithOffset,
+  getGraphicDataForInstrument,
+  openMarketPosition,
+} from "../../requests";
 import InstrumentCard from "../../components/instrument-card/InstrumentCard";
 import { styled } from "@mui/material/styles";
 import { Stomp } from "@stomp/stompjs";
@@ -44,7 +50,6 @@ const StockMarket = ({}) => {
   const navigate = useNavigate();
   const user = useSelector((state) => state.user.user);
   const instr = useSelector((state) => state.user.instrument);
-  const [cookies, setCookie, removeCookies] = useCookies();
   const [instruments, setInstruments] = useState([]);
   const [openPositions, setOpenPositions] = useState([]);
   const [freeCash, setFreeCash] = useState(0);
@@ -54,17 +59,21 @@ const StockMarket = ({}) => {
   const [showModal, setShowModal] = useState(false);
   const [openFirstTime, setOpenFirstTime] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [chosenInstrument, setChosenInstrument] = useState(0);
+  const [chosenInstrument, setChosenInstrument] = useState(1);
   const [chartData, setChartData] = useState([]);
   const [waitNotification, setWaitNotification] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const [listOfInstruments, setListOfInstruments] = useState([]);
-  const [client, setClient] = useState();
+  const clients = useRef([]);
   const [page, setPage] = useState(0);
   const [showLoadButton, setShowLoadButton] = useState(true);
   const [firstOnTheView, setFirstOnTheView] = useState(0);
-  const INSTRUMENT_CARD_HEIGHT = 240;
+  const openConnections = useRef(0);
+  const INSTRUMENT_CARD_HEIGHT = 250;
+  const VIEWED_INSTRUMENTS = 4;
+  const PAGE_SIZE = 10;
+  const DEV_URL = "http://localhost:8080/websocket";
   const dispatch = useDispatch();
 
   const handleOpen = () => {
@@ -89,7 +98,16 @@ const StockMarket = ({}) => {
   };
 
   const handleOnClick = (event) => {
-    setChartData([]);
+    const instr = JSON.parse(localStorage.getItem("instruments")).find(
+      (e) => (e.id = event.currentTarget.getAttribute("data-key"))
+    );
+    setChartData([
+      {
+        time: new Date().toLocaleTimeString(),
+        sell: instr.sell,
+        buy: instr.buy,
+      },
+    ]);
     setChosenInstrument(event.currentTarget.getAttribute("data-key"));
   };
 
@@ -138,85 +156,90 @@ const StockMarket = ({}) => {
     ]);
   };
 
-  // CONVERT BLOB OBJECT TO JSON
-  const handleBlob = (blob) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
+  const openConnection = (current, nConnections = 0) => {
+    const url = `http://localhost:8079/websocket?category=${current}`;
+    console.log(url);
+    console.log("Opened a new connection");
+    const sock = new SockJS(
+      DEV_URL,
+      {},
+      {
+        withCredentials: true,
+        transports: ["websocket"],
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          Upgrade: "WebSocket",
+        },
+      }
+    );
 
-      reader.onload = () => {
-        try {
-          const jsonString = reader.result;
-          const jsonObject = JSON.parse(jsonString);
-          resolve(jsonObject);
-        } catch (error) {
-          reject(error);
+    const client = Stomp.over(sock);
+    client.heartbeat.incoming = 2000;
+    client.heartbeat.outgoing = 2000;
+    clients.current = [...clients.current, client];
+
+    client.connect({}, () => {
+      openConnections.current += 1;
+      if (nConnections !== 0 && openConnections.current === nConnections) {
+        setTimeout(() => {
+          setLoading(false);
+        }, 4000);
+      }
+      setShowErrorModal(false);
+      client.subscribe(`/cfd/quotes/${user.id}`, (message) => {
+        const jsonObject = JSON.parse(message.body);
+        console.log(client);
+        console.log(jsonObject);
+        const newArr = [...openPositions];
+        Object.values(jsonObject.openPositions).map((item) => {
+          const indexOfElement = openPositions.findIndex(
+            (element) => element.ticker == item.ticker
+          );
+          if (indexOfElement == -1) {
+            newArr.push(item);
+          } else {
+            newArr[indexOfElement] = item;
+          }
+          setOpenPositions(newArr);
+        });
+        setLockedCash(jsonObject.lockedCash);
+        setLiveResult(jsonObject.result);
+        const cash =
+          parseFloat(localStorage.getItem("cash")) + jsonObject.result;
+        setFreeCash(cash - jsonObject.lockedCash);
+        setStatus(
+          calculateStatus(
+            jsonObject.lockedCash,
+            parseFloat(localStorage.getItem("cash")) + liveResult
+          )
+        );
+      });
+      client.subscribe(`/cfd/balance/${user.id}`, (message) => {
+        const jsonObject = JSON.parse(message.body);
+        if (jsonObject && jsonObject.balance) {
+          localStorage.setItem("cash", jsonObject.balance);
         }
+      });
+      client.subscribe(`/cfd/errors`, (message) => {
+        const jsonObject = JSON.parse(message.body);
+        if (jsonObject.status === "error") {
+          setShowErrorModal(true);
+        }
+      });
+      client.onWebSocketClose = (error) => {
+        openWS();
       };
-      reader.onerror = () => {
-        reject(reader.error);
-      };
-
-      reader.readAsText(blob);
     });
   };
-
   const openWS = async () => {
     const result = await getTypesOfOpenPositions(user.id);
     if (result.status === 200 && result.data && result.data.result) {
       const types = result.data.result.filter((elem, index, self) => {
         return index === self.indexOf(elem);
       });
-      types.map((current) => {
-        const URL = `http://localhost:8079/websocket?category=${current}`;
-        const DEV_URL = "http://localhost:8080/websocket";
-        const sock = new SockJS(
-          DEV_URL,
-          {},
-          {
-            withCredentials: true,
-            transports: ["websocket"],
-            headers: {
-              "Access-Control-Allow-Origin": "*",
-            },
-          }
-        );
-        const client = Stomp.over(sock);
-        setClient(client);
-        client.heartbeat.incoming = 2000;
-        client.heartbeat.outgoing = 2000;
-        client.connect({}, () => {
-          client.subscribe(`/cfd/quotes/${user.id}`, (message) => {
-            const jsonObject = JSON.parse(message.body);
-            setTimeout(() => {
-              setLoading(false);
-            }, 3000);
-            setShowErrorModal(false);
-            setLiveResult(jsonObject.result.toFixed(2));
-            setOpenPositions(Object.values(jsonObject.openPositions));
-            let cash = parseFloat(localStorage.getItem("cash"));
-            setLockedCash(jsonObject.lockedCash.toFixed(2));
-            const free = cash + parseFloat(jsonObject.result) - jsonObject.lockedCash;
-            setFreeCash(free.toFixed(2));
-            localStorage.setItem("locked", jsonObject.lockedCash.toFixed(2));
-            setStatus(calculateStatus(jsonObject.lockedCash, cash));
-          });
-          client.subscribe(`/cfd/balance/${user.id}`, (message) => {
-            console.log("live: " + liveResult);
-            const jsonObject = JSON.parse(message.body);
-            if (jsonObject && jsonObject.balance) {
-              localStorage.setItem("cash", jsonObject.balance);
-            }
-          });
-          client.subscribe(`/cfd/errors`, (message) => {
-            const jsonObject = JSON.parse(message.body);
-            if (jsonObject.status === "error") {
-              setShowErrorModal(true);
-            }
-          });
-        });
-        client.onWebSocketClose = () => {
-          openWS();
-        };
+      localStorage.setItem("types", JSON.stringify(types));
+      types.map((current, index) => {
+        openConnection(current, types.length);
       });
     }
   };
@@ -232,97 +255,109 @@ const StockMarket = ({}) => {
     return () => clearInterval(intervalId);
   }, []);
 
-  useEffect(() => {
-    const paginationMsg = { page: firstOnTheView };
-    if (client) {
-        client.send(
-          `/app/${user.id}/instruments`,
-          {},
-          JSON.stringify(paginationMsg)
-        );
-    }
-  },[firstOnTheView, loading]);
-
-  useEffect(() => {
-    if(client) {
-      client.send(
-        `/app/${user.id}/graphic`,
-        {},
-        JSON.stringify({instrumentName: JSON.parse(localStorage.getItem("instruments"))[chosenInstrument].ticker})
-      )
-    }
-  },[loading, chosenInstrument]);
-
   const getInstruments = async () => {
-    const res = await getInstrumentsWithPagination(page);
-    if(res.status === 200 && res.data && res.data.result) {
+    const res = await getInstrumentsWithPagination(page, PAGE_SIZE);
+    if (res.status === 200 && res.data && res.data.result) {
       const instruments = [...listOfInstruments, ...res.data.result];
-      if(res.data.result.length === 0) {
+      if (res.data.result.length === 0) {
         setShowLoadButton(false);
       }
       dispatch(update(instruments));
       localStorage.setItem("instruments", JSON.stringify(instruments));
       setListOfInstruments([...instruments]);
     }
-  }
+  };
+
+  const getInstrumentsOnTheView = async () => {
+    let firstItemAtTheView = parseInt(localStorage.getItem("scroll"));
+    firstItemAtTheView = firstItemAtTheView ? firstItemAtTheView : 0;
+    const nRows =
+      JSON.parse(localStorage.getItem("instruments")).length -
+        firstItemAtTheView >=
+      VIEWED_INSTRUMENTS
+        ? VIEWED_INSTRUMENTS
+        : JSON.parse(localStorage.getItem("instruments")).length -
+          firstItemAtTheView;
+    const res = await getInstrumentsWithOffset(firstItemAtTheView, nRows);
+    if (res.status === 200 && res.data && res.data.result) {
+      setListOfInstruments((instruments) => [
+        ...instruments.slice(0, firstItemAtTheView),
+        ...res.data.result,
+        ...instruments.slice(firstItemAtTheView + res.data.result.length),
+      ]);
+    }
+  };
 
   const handleScroll = (event) => {
-    let pos = Math.floor((event.target.scrollTop - 100) / INSTRUMENT_CARD_HEIGHT);
-    pos = (pos < 0) ? 0 : pos;
+    let pos = Math.floor(
+      (event.target.scrollTop - 100) / INSTRUMENT_CARD_HEIGHT
+    );
+    pos = pos < 0 ? 0 : pos;
     localStorage.setItem("scroll", pos);
     setFirstOnTheView(pos);
+  };
+
+  const setRow = (newRow) => {
+    setChartData([
+      {
+        time: new Date().toLocaleTimeString(),
+        sell: instr.sell,
+        buy: instr.buy,
+      },
+    ]);
+    setChosenInstrument(newRow);
+  };
+
+  const getDataForGraphic = async () => {
+    let id = 1;
+    if (localStorage.getItem("instruments")) {
+      id = JSON.parse(localStorage.getItem("instruments")).find(
+        (e) => e.id == chosenInstrument
+      )?.id;
+    }
+    const res = await getGraphicDataForInstrument(id);
+    if (res.status === 200 && res.data.result) {
+      addDataToChart(res.data.result);
+    }
+  };
+
+  const openNewPosition = async (position) => {
+    const res = await openMarketPosition(position, user.id);
+    if (res.status === 200 && res.data && res.data.result) {
+         const pos = res.data.result;
+         const price = pos.type === "SHORT" ? pos.sellPrice : pos.buyPrice;
+         const currentPrice = pos.type === "LONG" ? pos.buyPrice : pos.sellPrice;
+          // openConnection(res.data.result.tickerType)
+          setOpenPositions(openPositions => [...openPositions, {ticker: pos.ticker, type: pos.type, quantity: pos.quantity, price: price, currentPrice: currentPrice, margin: "", result: ""}])
+    }
   }
+
+  useEffect(() => {
+    dispatch(update([]));
+    const intervalId = setInterval(() => {
+      getInstrumentsOnTheView();
+    }, 5000);
+    return () => clearInterval(intervalId);
+  }, []);
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      getDataForGraphic();
+    }, 10000);
+    return () => clearInterval(intervalId);
+  }, []);
 
   useEffect(() => {
     getInstruments();
-  },[page]);
-
+    if (chartData.length === 0) {
+      getDataForGraphic();
+    }
+  }, [page]);
 
   useEffect(() => {
     getAccountBalance();
-    if(loading) {
-      openWS();
-    }
-  }, [loading]);
-
-  useEffect(() => {
-      if(client) {
-        client.subscribe(
-          `/cfd/users/${user.id}/instruments/`,
-          (message) => {
-            const jsonObject = JSON.parse(message.body);
-            if(listOfInstruments.length > 0) {
-              const ins = JSON.parse(localStorage.getItem("instruments"));
-              setListOfInstruments([...ins.slice(0, parseInt(localStorage.getItem("scroll"))), ...jsonObject, ...ins.slice(parseInt(localStorage.getItem("scroll"))  + jsonObject.length)]);
-            }
-            // if (
-            //   !localStorage.getItem("input") ||
-            //   localStorage.getItem("input") === ""
-            // ) {
-            //   setListOfInstruments(jsonObject.concat(new Array(7)));
-            // } else {
-            //   const ins = jsonObject.filter(
-            //     (elem1) =>
-            //       elem1.name
-            //         .toLowerCase()
-            //         .indexOf(localStorage.getItem("input").toLowerCase()) > -1
-            //   );
-            //   setListOfInstruments(ins);
-            // }
-            // setInstruments(jsonObject);
-            // addDataToChart(jsonObject[chosenInstrument]);
-          }
-        );
-
-        client.subscribe(
-          `/cfd/users/${user.id}/graphic`,
-          (message) => {
-            const jsonObject = JSON.parse(message.body);
-            addDataToChart(jsonObject);
-          }
-        )
-      }
-  },[loading])
+    openWS();
+  }, []);
 
   return (
     <React.Fragment>
@@ -331,7 +366,12 @@ const StockMarket = ({}) => {
       ) : (
         <Grid container justifyContent="center" sx={styles.wrapper}>
           <Grid container item xs={12} xl={10} sx={styles.header}>
-            <Header cash={(parseFloat(localStorage.getItem("cash")) + parseFloat(liveResult))} />
+            <Header
+              cash={(
+                parseFloat(localStorage.getItem("cash")) +
+                parseFloat(liveResult)
+              ).toFixed(2)}
+            />
           </Grid>
           <Grid
             container
@@ -346,7 +386,7 @@ const StockMarket = ({}) => {
               xl={2}
               spacing={5}
               px={0}
-              onScroll = {handleScroll} 
+              onScroll={handleScroll}
               sx={[
                 styles.instruments,
                 {
@@ -362,7 +402,7 @@ const StockMarket = ({}) => {
                 xs={12}
                 justifyContent="center"
                 my={1}
-                sx={{width: "100%"}}
+                sx={{ width: "100%" }}
               >
                 <TextField
                   id="outlined-basic"
@@ -373,41 +413,59 @@ const StockMarket = ({}) => {
                 />
               </Grid>
               <Box sx={styles.scrollView}>
-              {listOfInstruments.length > 0 &&
-                listOfInstruments.map((current, index) => {
-                  return (
-                    <>
-                    <Grid
-                      item
-                      xs={12}
-                      key={current.name}
-                      data-key={index}
-                      onClick={handleOnClick}
-                      my={3}
-                    >
-                      <InstrumentCard
-                        name={current.name}
-                        sellPrice={current.sell.toFixed(2)}
-                        buyPrice={current.buy.toFixed(2)}
-                        minQuantity={current.quantity}
-                        marketName={current.marketName}
-                        margin={(current.leverage * 100).toFixed(0)}
-                      />
-                    </Grid>
-                    {index === (listOfInstruments.length - 1) && showLoadButton ? <Button sx={styles.loadMore} onClick = {() => {setPage(page+1)}}>Load More</Button> : null}
-                    </>
-                  );
-                })}
-                
-              {listOfInstruments.length === 0 && (
-                <Typography px={1} mt={4} textAlign="center">Not found results</Typography>
-              )}
+                {listOfInstruments.length > 0 &&
+                  listOfInstruments.map((current, index) => {
+                    return (
+                      <>
+                        <Grid
+                          item
+                          xs={12}
+                          key={current.name}
+                          data-key={current.id}
+                          onClick={handleOnClick}
+                          my={3}
+                        >
+                          <InstrumentCard
+                            id={current.id}
+                            name={current.name}
+                            sellPrice={current.sell.toFixed(2)}
+                            buyPrice={current.buy.toFixed(2)}
+                            minQuantity={current.quantity}
+                            marketName={current.marketName}
+                            margin={(current.leverage * 100).toFixed(0)}
+                            openPosition={openNewPosition}
+                          />
+                        </Grid>
+                        {index === listOfInstruments.length - 1 &&
+                        showLoadButton ? (
+                          <Button
+                            sx={styles.loadMore}
+                            onClick={() => {
+                              setPage(page + 1);
+                            }}
+                          >
+                            Load More
+                          </Button>
+                        ) : null}
+                      </>
+                    );
+                  })}
+
+                {listOfInstruments.length === 0 && (
+                  <Typography px={1} mt={4} textAlign="center">
+                    Not found results
+                  </Typography>
+                )}
               </Box>
             </Grid>
             <Grid item xs={12} xl={10} sx={styles.positions}>
               {localStorage.getItem("instruments") ? (
                 <Typography variant="h4" color="#ffffff" mb={4}>
-                  {JSON.parse(localStorage.getItem("instruments"))[chosenInstrument].name}
+                  {
+                    JSON.parse(localStorage.getItem("instruments")).find(
+                      (e) => e.id == chosenInstrument
+                    )?.name
+                  }
                 </Typography>
               ) : null}
               <Grid
@@ -458,7 +516,7 @@ const StockMarket = ({}) => {
                       </Typography>
                     </StyledIconButton>
                   ) : null}
-                  <PositionsTable rows={openPositions} />
+                  <PositionsTable rows={openPositions} setRow={setRow} setData = {setOpenPositions} />
                 </Grid>
                 <Grid
                   container
@@ -477,20 +535,24 @@ const StockMarket = ({}) => {
                             : { color: "#3f3f3f" },
                         ]}
                       >
-                        {liveResult}
+                        {liveResult.toFixed(2)}
                       </Typography>
                     </Box>
                   </Grid>
                   <Grid item xs={2}>
                     <Box sx={styles.footer}>
                       FREE FUNDS{" "}
-                      <Typography sx={styles.numbers}>{freeCash}</Typography>
+                      <Typography sx={styles.numbers}>
+                        {freeCash.toFixed(2)}
+                      </Typography>
                     </Box>
                   </Grid>
                   <Grid item xs={2}>
                     <Box sx={styles.footer}>
                       BLOCKED FUNDS{" "}
-                      <Typography sx={styles.numbers}>{lockedCash}</Typography>
+                      <Typography sx={styles.numbers}>
+                        {lockedCash.toFixed(2)}
+                      </Typography>
                     </Box>
                   </Grid>
                   <Grid container item xs={2} justifyContent={"center"}>
@@ -620,6 +682,6 @@ const styles = {
     paddingLeft: "40px",
   },
   loadMore: {
-    marginBottom: "20px"
-  }
+    marginBottom: "20px",
+  },
 };

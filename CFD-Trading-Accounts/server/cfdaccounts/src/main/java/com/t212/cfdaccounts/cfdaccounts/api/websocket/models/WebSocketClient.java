@@ -36,7 +36,7 @@ public class WebSocketClient {
 
     public void setPositions(List<AccountPositionDAO> positions) {
         for (AccountPositionDAO p : positions) {
-            this.positions.put(p.ticker + "_" + p.type, p);
+            this.positions.put(p.ticker() + "_" + p.type(), p);
         }
     }
 

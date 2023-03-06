@@ -7,12 +7,14 @@ import { Grid, TextField } from "@mui/material";
 import Typography from "@mui/material/Typography";
 
 const InstrumentCard = ({
+  id,
   name,
   sellPrice,
   buyPrice,
   minQuantity,
   marketName,
   margin,
+  openPosition
 }) => {
   const [hover, setHover] = useState(false);
   return (
@@ -34,7 +36,7 @@ const InstrumentCard = ({
           defaultValue={minQuantity}
         />
         <Grid container justifyContent={"space-between"} mt={2}>
-          <Button sx={styles.button}>
+          <Button sx={styles.button} onClick = {(e) => {e.stopPropagation(); openPosition({id: id, quantity: minQuantity, buyPrice: buyPrice, sellPrice: sellPrice, positionType: "SHORT"})}}>
             <Typography sx={styles.font}>SELL</Typography>
             <Box display="block">
               <Typography sx={[styles.font, styles.currency, {color: hover ? "#ffffff" : "#000000"}]}>
@@ -42,7 +44,7 @@ const InstrumentCard = ({
               </Typography>
             </Box>
           </Button>
-          <Button sx={styles.button}>
+          <Button sx={styles.button} onClick = {(e) => {e.stopPropagation(); openPosition({id: id, quantity: minQuantity, buyPrice: buyPrice, sellPrice: sellPrice, positionType: "LONG"})}}>
             <Typography sx={styles.font}>BUY</Typography>
             <Typography sx={[styles.font, styles.currency, {color: hover ? "#ffffff" : "#000000"}]} variant="body2">
               $<span className={styles.price}>{buyPrice}</span>

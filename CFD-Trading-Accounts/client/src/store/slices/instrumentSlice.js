@@ -5,7 +5,7 @@ export const instrumentsSlice = createSlice({
   initialState: [],
   reducers: {
     update: (state, action) => {
-      return action.payload
+      return [...action.payload]
     },
   },
 });

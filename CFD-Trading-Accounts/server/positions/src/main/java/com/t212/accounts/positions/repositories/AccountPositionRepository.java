@@ -13,11 +13,11 @@ public interface AccountPositionRepository {
 
     List<AccountPositionDAO> getClosePositions(long userId);
 
-    AccountPositionDAO updatePosition(long userId, long instrumentId, String type);
+    AccountPositionDAO updatePosition(long userId, String ticker, String type);
 
     AccountPositionDAO getOpenPositionById(long userId, long instrumentId, String type);
 
-    AccountPositionDAO getUpdatedPositionById(long userId, long instrumentId, String type);
+    AccountPositionDAO getUpdatedPositionById(long userId, String ticker, String type);
 
     AccountPositionDAO addPositionToUser(long userId, long instrumentId, BigDecimal quantity, String type, BigDecimal buyPrice, BigDecimal sellPrice);
 

@@ -65,9 +65,10 @@ create table if not exists `account_positions` (
 );
 
 create table if not exists `instrument_prices` (
-    instrument_id int not null,
+	id int not null auto_increment,
+    ticker varchar(255) not null,
     buy decimal(19,2),
     sell decimal(19,2),
-    constraint PK_INSTRUMENT_PRICES primary key(instrument_id),
-    constraint FK_INSTRUMENT_TO_PRICES foreign key(instrument_id) references instruments(id) on delete cascade
+    constraint PK_INSTRUMENT_PRICES primary key(id),
+    constraint FK_INSTRUMENT_TO_PRICES foreign key(ticker) references instruments(ticker) on delete cascade
 );

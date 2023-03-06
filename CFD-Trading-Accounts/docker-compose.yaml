@@ -31,6 +31,7 @@ services:
       - POSITIONS_URL=http://positions:8082/api/v1/users/
       - BALANCE_URL=http://accountbalance:8085/api/v1/users/
       - KAFKA_URL=kafka:9092
+      - KAFKA_PARTITION=0
 
   indices:
     container_name: indices
@@ -51,6 +52,7 @@ services:
       - POSITIONS_URL=http://positions:8082/api/v1/users/
       - BALANCE_URL=http://accountbalance:8085/api/v1/users/
       - KAFKA_URL=kafka:9092
+      - KAFKA_PARTITION=1
 
   crypto:
     container_name: crypto
@@ -71,6 +73,7 @@ services:
       - POSITIONS_URL=http://positions:8082/api/v1/users/
       - BALANCE_URL=http://accountbalance:8085/api/v1/users/
       - KAFKA_URL=kafka:9092
+      - KAFKA_PARTITION=2
 
   commodities:
     container_name: commodities
@@ -91,6 +94,7 @@ services:
       - POSITIONS_URL=http://positions:8082/api/v1/users/
       - BALANCE_URL=http://accountbalance:8085/api/v1/users/
       - KAFKA_URL=kafka:9092
+      - KAFKA_PARTITION=4
 
   currencies:
     container_name: currencies
@@ -111,6 +115,7 @@ services:
       - POSITIONS_URL=http://positions:8082/api/v1/users/
       - BALANCE_URL=http://accountbalance:8085/api/v1/users/
       - KAFKA_URL=kafka:9092
+      - KAFKA_PARTITION=3
 
   accountbalance: 
     container_name: accountbalance

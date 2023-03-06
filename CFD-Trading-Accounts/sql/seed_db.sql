@@ -135,8 +135,8 @@ BEGIN
           VALUES (name, fullname, ticker, market_name, FLOOR(RAND() * 5) + 1, min_quantity, leverage);
 
         INSERT INTO
-          `instrument_prices` (instrument_id, buy, sell)
-          VALUES (cnt, RAND() * (500 - 50) + 50, RAND() * (500 - 50) + 50);
+          `instrument_prices` (ticker, buy, sell)
+          VALUES (ticker, RAND() * (500 - 50) + 50, RAND() * (500 - 50) + 50);
 
 		set  name_cnt = name_cnt + 1;
         set  fullname_cnt = fullname_cnt + 1;

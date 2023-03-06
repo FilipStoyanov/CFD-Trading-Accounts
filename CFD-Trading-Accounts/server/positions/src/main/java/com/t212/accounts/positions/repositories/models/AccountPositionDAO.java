@@ -14,9 +14,10 @@ public class AccountPositionDAO {
     public final Date createdAt;
     public final Date updatedAt;
     public Date deletedAt;
+    public final String tickerType;
 
 
-    public AccountPositionDAO(long userId, String ticker, BigDecimal quantity, String type, BigDecimal buyPrice, BigDecimal sellPrice, Date date) {
+    public AccountPositionDAO(long userId, String ticker, BigDecimal quantity, String type, BigDecimal buyPrice, BigDecimal sellPrice, Date date, String tickerType) {
         this.userId = userId;
         this.ticker = ticker;
         this.quantity = quantity;
@@ -27,9 +28,10 @@ public class AccountPositionDAO {
         this.updatedAt = date;
         this.isClosed = false;
         this.deletedAt = null;
+        this.tickerType = tickerType;
     }
 
-    public AccountPositionDAO(long userId, String ticker, BigDecimal quantity, String type, BigDecimal buyPrice, BigDecimal sellPrice, Boolean isClosed, Date createdAt, Date updatedAt, Date deletedAt) {
+    public AccountPositionDAO(long userId, String ticker, BigDecimal quantity, String type, BigDecimal buyPrice, BigDecimal sellPrice, Boolean isClosed, Date createdAt, Date updatedAt, Date deletedAt, String tickerType) {
         this.userId = userId;
         this.ticker = ticker;
         this.quantity = quantity;
@@ -40,5 +42,6 @@ public class AccountPositionDAO {
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
         this.deletedAt = deletedAt;
+        this.tickerType = tickerType;
     }
 }

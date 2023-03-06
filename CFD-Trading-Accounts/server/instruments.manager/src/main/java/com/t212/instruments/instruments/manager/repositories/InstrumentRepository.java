@@ -22,10 +22,13 @@ public interface InstrumentRepository {
 
     List<InstrumentWithPricesDAO> getAllInstrumentsWithInitialPrice();
 
-    InstrumentWithPricesDAO getInstrumentWithInitialPrice(String ticker);
+    InstrumentWithPricesDAO getInstrumentWithInitialPrice(long id);
 
     List<InstrumentWithPricesDAO> getTop10Instruments();
 
+    List<InstrumentWithPricesDAO> getInstrumentsPricesWithOffset(Integer offset, Integer numberOfRows);
+
     List<InstrumentWithPricesDAO> getPaginatedInstrumentsWithPrices(Integer page, Integer pageSize);
+
     long getTypeId(String type);
 }
