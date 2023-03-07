@@ -45,10 +45,4 @@ public final class PositionsQueries {
             "left join instrument_prices i2p on i.type_id = i2p.id " +
             "where a.user_id=? and a.is_closed = false";
 
-    public static final String GET_ALL_TYPES_OF_POSITIONS = "SELECT i2t.name as type " +
-            "from account_positions a " +
-            "left join instruments i on a.instrument_id = i.id " +
-            "left join instrument_type i2t on i.type_id = i2t.id " +
-            "where a.user_id = ?";
-
 }

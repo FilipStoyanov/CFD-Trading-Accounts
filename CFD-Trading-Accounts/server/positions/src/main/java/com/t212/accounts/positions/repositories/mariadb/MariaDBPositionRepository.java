@@ -61,11 +61,6 @@ public class MariaDBPositionRepository implements AccountPositionRepository {
         return getOpenPositionById(userId, instrumentId, type);
     }
 
-    @Override
-    public List<String> getAllTypesOfPositions(long userId) throws EmptyResultDataAccessException {
-        return jdbc.query(PositionsQueries.GET_ALL_TYPES_OF_POSITIONS, (rs, rowNum) -> rs.getString("type"), userId);
-    }
-
     private static AccountPositionDAO fromResultSetToPosition(ResultSet rs) throws SQLException {
         return new AccountPositionDAO(
                 rs.getInt("user_id"),

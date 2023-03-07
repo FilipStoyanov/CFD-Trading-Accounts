@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import PositionsTable from "../../components/positions-table/PositionsTable";
-import { useNavigate } from "react-router-dom";
 import LinearProgressWithLabel from "../../components/progress-bar/LinearProgressWithLabel";
 import AlarmAddOutlinedIcon from "@mui/icons-material/AlarmAddOutlined";
 import { useSelector, useDispatch } from "react-redux";
@@ -17,7 +16,6 @@ import {
 } from "@mui/material";
 import {
   fetchAccountBalance,
-  getTypesOfOpenPositions,
   getInstrumentsWithPagination,
   getInstrumentsWithOffset,
   getGraphicDataForInstrument,
@@ -46,8 +44,7 @@ const StyledIconButton = styled(IconButton)(({ theme }) => ({
     backgroundColor: "transparent",
   },
 }));
-const StockMarket = ({}) => {
-  const navigate = useNavigate();
+const StockMarket = React.memo(({}) => {
   const user = useSelector((state) => state.user.user);
   const instr = useSelector((state) => state.user.instrument);
   const [instruments, setInstruments] = useState([]);
@@ -65,15 +62,14 @@ const StockMarket = ({}) => {
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const [listOfInstruments, setListOfInstruments] = useState([]);
-  const clients = useRef([]);
   const [page, setPage] = useState(0);
   const [showLoadButton, setShowLoadButton] = useState(true);
-  const [firstOnTheView, setFirstOnTheView] = useState(0);
-  const openConnections = useRef(0);
   const INSTRUMENT_CARD_HEIGHT = 250;
   const VIEWED_INSTRUMENTS = 4;
   const PAGE_SIZE = 10;
+  const opened = useRef(0);
   const DEV_URL = "http://localhost:8080/websocket";
+  const HAPROXY_URL = "http://localhost:8079/websocket";
   const dispatch = useDispatch();
 
   const handleOpen = () => {
@@ -156,13 +152,10 @@ const StockMarket = ({}) => {
     ]);
   };
 
-  const openConnection = (current, nConnections = 0) => {
-    const url = `http://localhost:8079/websocket?category=${current}`;
-    console.log(url);
-    console.log("Opened a new connection");
+  const openConnection = useCallback(() => {
     const sock = new SockJS(
-      DEV_URL,
-      {},
+      HAPROXY_URL,
+      {sessionId: true},
       {
         withCredentials: true,
         transports: ["websocket"],
@@ -172,77 +165,60 @@ const StockMarket = ({}) => {
         },
       }
     );
+    console.log("OPEN");
 
-    const client = Stomp.over(sock);
-    client.heartbeat.incoming = 2000;
-    client.heartbeat.outgoing = 2000;
-    clients.current = [...clients.current, client];
+    // const client = Stomp.over(sock);
+    // client.heartbeat.incoming = 2000;
+    // client.heartbeat.outgoing = 2000;
 
-    client.connect({}, () => {
-      openConnections.current += 1;
-      if (nConnections !== 0 && openConnections.current === nConnections) {
-        setTimeout(() => {
-          setLoading(false);
-        }, 4000);
-      }
-      setShowErrorModal(false);
-      client.subscribe(`/cfd/quotes/${user.id}`, (message) => {
-        const jsonObject = JSON.parse(message.body);
-        console.log(client);
-        console.log(jsonObject);
-        const newArr = [...openPositions];
-        Object.values(jsonObject.openPositions).map((item) => {
-          const indexOfElement = openPositions.findIndex(
-            (element) => element.ticker == item.ticker
-          );
-          if (indexOfElement == -1) {
-            newArr.push(item);
-          } else {
-            newArr[indexOfElement] = item;
-          }
-          setOpenPositions(newArr);
-        });
-        setLockedCash(jsonObject.lockedCash);
-        setLiveResult(jsonObject.result);
-        const cash =
-          parseFloat(localStorage.getItem("cash")) + jsonObject.result;
-        setFreeCash(cash - jsonObject.lockedCash);
-        setStatus(
-          calculateStatus(
-            jsonObject.lockedCash,
-            parseFloat(localStorage.getItem("cash")) + liveResult
-          )
-        );
-      });
-      client.subscribe(`/cfd/balance/${user.id}`, (message) => {
-        const jsonObject = JSON.parse(message.body);
-        if (jsonObject && jsonObject.balance) {
-          localStorage.setItem("cash", jsonObject.balance);
-        }
-      });
-      client.subscribe(`/cfd/errors`, (message) => {
-        const jsonObject = JSON.parse(message.body);
-        if (jsonObject.status === "error") {
-          setShowErrorModal(true);
-        }
-      });
-      client.onWebSocketClose = (error) => {
-        openWS();
-      };
-    });
-  };
-  const openWS = async () => {
-    const result = await getTypesOfOpenPositions(user.id);
-    if (result.status === 200 && result.data && result.data.result) {
-      const types = result.data.result.filter((elem, index, self) => {
-        return index === self.indexOf(elem);
-      });
-      localStorage.setItem("types", JSON.stringify(types));
-      types.map((current, index) => {
-        openConnection(current, types.length);
-      });
-    }
-  };
+    // client.connect({}, () => {
+    //   setTimeout(() => {
+    //     setLoading(false);
+    //   }, 4000);
+    //   setShowErrorModal(false);
+    //   client.subscribe(`/cfd/quotes/${user.id}`, (message) => {
+    //     const jsonObject = JSON.parse(message.body);
+    //     const newArr = [...openPositions];
+    //     Object.values(jsonObject.openPositions).map((item) => {
+    //       const indexOfElement = openPositions.findIndex(
+    //         (element) => element.ticker == item.ticker
+    //       );
+    //       if (indexOfElement == -1) {
+    //         newArr.push(item);
+    //       } else {
+    //         newArr[indexOfElement] = item;
+    //       }
+    //       setOpenPositions(newArr);
+    //     });
+    //     setLockedCash(jsonObject.lockedCash);
+    //     setLiveResult(jsonObject.result);
+    //     const cash =
+    //       parseFloat(localStorage.getItem("cash")) + jsonObject.result;
+    //     setFreeCash(cash - jsonObject.lockedCash);
+    //     setStatus(
+    //       calculateStatus(
+    //         jsonObject.lockedCash,
+    //         parseFloat(localStorage.getItem("cash")) + liveResult
+    //       )
+    //     );
+    //   });
+    //   client.subscribe(`/cfd/balance/${user.id}`, (message) => {
+    //     const jsonObject = JSON.parse(message.body);
+    //     if (jsonObject && jsonObject.balance) {
+    //       localStorage.setItem("cash", jsonObject.balance);
+    //     }
+    //   });
+    //   client.subscribe(`/cfd/errors`, (message) => {
+    //     const jsonObject = JSON.parse(message.body);
+    //     if (jsonObject.status === "error") {
+    //       setShowErrorModal(true);
+    //     }
+    //   });
+    //   client.onWebSocketClose = () => {
+    //     openConnection();
+    //   };
+    // });
+  }, []);
 
   useEffect(() => {
     localStorage.removeItem("input");
@@ -294,7 +270,6 @@ const StockMarket = ({}) => {
     );
     pos = pos < 0 ? 0 : pos;
     localStorage.setItem("scroll", pos);
-    setFirstOnTheView(pos);
   };
 
   const setRow = (newRow) => {
@@ -324,13 +299,23 @@ const StockMarket = ({}) => {
   const openNewPosition = async (position) => {
     const res = await openMarketPosition(position, user.id);
     if (res.status === 200 && res.data && res.data.result) {
-         const pos = res.data.result;
-         const price = pos.type === "SHORT" ? pos.sellPrice : pos.buyPrice;
-         const currentPrice = pos.type === "LONG" ? pos.buyPrice : pos.sellPrice;
-          // openConnection(res.data.result.tickerType)
-          setOpenPositions(openPositions => [...openPositions, {ticker: pos.ticker, type: pos.type, quantity: pos.quantity, price: price, currentPrice: currentPrice, margin: "", result: ""}])
+      const pos = res.data.result;
+      const price = pos.type === "SHORT" ? pos.sellPrice : pos.buyPrice;
+      const currentPrice = pos.type === "LONG" ? pos.buyPrice : pos.sellPrice;
+      setOpenPositions((openPositions) => [
+        ...openPositions,
+        {
+          ticker: pos.ticker,
+          type: pos.type,
+          quantity: pos.quantity,
+          price: price,
+          currentPrice: currentPrice,
+          margin: "",
+          result: "",
+        },
+      ]);
     }
-  }
+  };
 
   useEffect(() => {
     dispatch(update([]));
@@ -355,8 +340,11 @@ const StockMarket = ({}) => {
   }, [page]);
 
   useEffect(() => {
-    getAccountBalance();
-    openWS();
+    if (opened.current == 0) {
+      getAccountBalance();
+      openConnection();
+    }
+    opened.current = opened.current + 1;
   }, []);
 
   return (
@@ -416,7 +404,7 @@ const StockMarket = ({}) => {
                 {listOfInstruments.length > 0 &&
                   listOfInstruments.map((current, index) => {
                     return (
-                      <>
+                      <div id={index}>
                         <Grid
                           item
                           xs={12}
@@ -447,7 +435,7 @@ const StockMarket = ({}) => {
                             Load More
                           </Button>
                         ) : null}
-                      </>
+                      </div>
                     );
                   })}
 
@@ -516,7 +504,11 @@ const StockMarket = ({}) => {
                       </Typography>
                     </StyledIconButton>
                   ) : null}
-                  <PositionsTable rows={openPositions} setRow={setRow} setData = {setOpenPositions} />
+                  <PositionsTable
+                    rows={openPositions}
+                    setRow={setRow}
+                    setData={setOpenPositions}
+                  />
                 </Grid>
                 <Grid
                   container
@@ -595,7 +587,7 @@ const StockMarket = ({}) => {
       {showErrorModal ? <T212Modal /> : null}
     </React.Fragment>
   );
-};
+});
 
 export default StockMarket;
 

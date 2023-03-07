@@ -369,7 +369,7 @@ const styles = {
   },
   close: {
     position: "absolute",
-    top: -2,
+    top: -4,
     right: 0
   }
 }

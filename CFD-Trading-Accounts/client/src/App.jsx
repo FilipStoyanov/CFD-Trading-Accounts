@@ -15,29 +15,25 @@ import { add } from "./store/slices/userSlice";
 import StockMarket from "./screens/stock-market/StockMarket";
 
 function App() {
-  const user = useSelector((state) => state.user.user);
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const [cookies, setCookie, removeCookies] = useCookies();
 
   const getUser = async () => {
     let userId = localStorage.getItem("user");
     if (userId) {
       try {
-        const res = await getUserData(parseInt(userId), cookies.secure);
+        const res = await getUserData(parseInt(userId));
         dispatch(add(res.data.result));
       } catch (error) {
         if (error.response.status === 401) {
           navigate("/login");
-          removeCookies("secure");
-          removeCookies("timestamp");
         }
       }
     }
   };
 
   useEffect(() => {
-    getUser();
+      getUser();
   }, []);
 
   return (

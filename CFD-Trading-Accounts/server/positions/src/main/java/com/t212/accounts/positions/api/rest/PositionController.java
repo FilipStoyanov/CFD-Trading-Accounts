@@ -43,20 +43,6 @@ public class PositionController {
             return ResponseEntity.status(404).body(new ApiResponse(404, "Not found open positions"));
         }
     }
-
-    @GetMapping(value = "{id}/positions-type")
-    public ResponseEntity<ApiResponse> getTypesOfOpenPositions(@PathVariable("id") long userId) {
-        if (userId <= 0) {
-            return ResponseEntity.status(400).body(new ApiResponse(400, "Invalid parameters"));
-        }
-        try {
-            List<String> types = positionsService.getAllTypesOfPositions(userId);
-            return ResponseEntity.status(200).body(new ApiResponse(200, "", types));
-        } catch (EmptyResultDataAccessException e) {
-            return ResponseEntity.status(404).body(new ApiResponse(404, "Not found open positions"));
-        }
-    }
-
     @GetMapping(value = "{id}/open-positions")
     public ResponseEntity<ApiResponse> listOpenPositionsWithCurrentPrices(@PathVariable("id") long id) {
         if (id <= 0) {
@@ -88,14 +74,14 @@ public class PositionController {
         if (userId < 1) {
             return ResponseEntity.status(400).body(new ApiResponse(400, "Invalid path variable"));
         }
-//        try {
+        try {
             Position updatedPosition = positionsService.updatePosition(userId, positionUpdate.ticker(), positionUpdate.positionType());
             ClosePositionEvent pEvent = new ClosePositionEvent(userId, updatedPosition.ticker, positionUpdate.positionType(), positionUpdate.quantity(), positionUpdate.buyPrice(), positionUpdate.sellPrice(), System.currentTimeMillis());
             kafkaGateway.sendClosePositionEvent(pEvent);
             return ResponseEntity.status(200).body(new ApiResponse(200, "Successfully updated", updatedPosition));
-//        } catch (DataAccessException e) {
-//            return ResponseEntity.status(400).body(new ApiResponse(400, "Not successfully updated"));
-//        }
+        } catch (DataAccessException e) {
+            return ResponseEntity.status(400).body(new ApiResponse(400, "Not successfully updated"));
+        }
     }
 
     @PostMapping(value = "{userId}/positions")

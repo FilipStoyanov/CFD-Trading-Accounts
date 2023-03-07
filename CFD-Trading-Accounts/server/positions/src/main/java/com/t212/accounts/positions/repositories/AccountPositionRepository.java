@@ -20,6 +20,4 @@ public interface AccountPositionRepository {
     AccountPositionDAO getUpdatedPositionById(long userId, String ticker, String type);
 
     AccountPositionDAO addPositionToUser(long userId, long instrumentId, BigDecimal quantity, String type, BigDecimal buyPrice, BigDecimal sellPrice);
-
-    List<String> getAllTypesOfPositions(long userId);
 }

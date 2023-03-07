@@ -18,7 +18,6 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.ResourceAccessException;
-
 import java.sql.Date;
 
 @Component

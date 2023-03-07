@@ -11,10 +11,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.kafka.annotation.TopicPartition;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.ResourceAccessException;
+
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -38,9 +38,8 @@ public class StockPricesListener {
 
     @KafkaListener(
             topics = "quotes.raw.cfd",
-            groupId = "cfd_stock_prices",
-            containerFactory = "StockPricesUpdatedContainerFactory",
-            topicPartitions = {@TopicPartition(topic = "quotes.raw.cfd", partitions = "${kafka.stock-prices-partition}")}
+            groupId = "cfd_stock_prices-#{ T(java.util.UUID).randomUUID().toString() }",
+            containerFactory = "StockPricesUpdatedContainerFactory"
     )
     void listenForStockPrices(ConsumerRecord<String, StockPriceUpdateEvent> data, Acknowledgment acknowledgment, Consumer<?, ?> consumer) {
         if (data != null && instrumentPrices != null) {

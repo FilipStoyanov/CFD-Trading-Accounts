@@ -24,9 +24,6 @@ public class PositionsService {
         return positionRepository.getPositions(userId).stream().map(current -> Mappers.fromResultSetToOpenPosition(current)).collect(Collectors.toList());
     }
 
-    public List<String> getAllTypesOfPositions(long userId) throws EmptyResultDataAccessException {
-        return positionRepository.getAllTypesOfPositions(userId);
-    }
 
     public List<PositionWithPrices> getOpenPositionsWithPricesById(long userId) throws EmptyResultDataAccessException {
         return positionRepository.getPositionsWithCurrentPrices(userId).stream().map(current -> Mappers.fromResultSetToPositionWithPrices(current)).collect(Collectors.toList());
