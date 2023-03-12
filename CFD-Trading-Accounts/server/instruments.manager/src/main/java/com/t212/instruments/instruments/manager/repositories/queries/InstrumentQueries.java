@@ -20,6 +20,7 @@ public final class InstrumentQueries {
             "from instruments i " +
             "left join instrument_type t on i.type_id = t.id " +
             "left join instrument_prices i2p on i.ticker = i2p.ticker " +
+            "where i.name like ? " +
             "limit ?,?";
     public static final String DELETE_INSTRUMENT = "delete from instruments where id=?";
 
@@ -31,7 +32,7 @@ public final class InstrumentQueries {
     public static final String GET_ALL_INSTRUMENTS_WITH_INITIAL_PRICE = "SELECT i.id, i.name, i.ticker, i.fullname, i.market_name, t.name as type, i.min_quantity, i.leverage, i2p.buy, i2p.sell, i.created_at, i.updated_at " +
             "from instruments i " +
             "left join instrument_type t on i.type_id = t.id " +
-            "left join instrument_prices i2p on i.ticker = i2p.ticker";
+            "left join instrument_prices i2p on i.ticker = i2p.ticker ";
     public static final String GET_INSTRUMENT_WITH_INITIAL_PRICE = "SELECT i.id, i.name, i.ticker, i.fullname, i.market_name, t.name as type, i.min_quantity, i.leverage, i2p.buy, i2p.sell, i.created_at, i.updated_at " +
             "from instruments i " +
             "left join instrument_type t on i.type_id = t.id " +

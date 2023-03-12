@@ -11,55 +11,69 @@ services:
       MARIADB_ROOT_PASSWORD: 123456789
     volumes:
       - C:\Dockerfile\db-on-docker-ms:/var/lib/mariadb
-    networks:
-      - backend
 
-  streaming-instance-1:
-    container_name: streaming-instance-1
+  streaming_instance-1:
+    container_name: streaming_instance-1
     build:
       dockerfile: compose/DockerFile_positions_streaming
     ports:
       - 8080:8080
     depends_on:
       - mariadb
-      - instruments
-      - positions
-      - accountbalance
+      - cfdinstruments
+      - accountpositions
+      - balances
       - kafka
     environment: 
       - DB_URL=jdbc:mariadb://mdb:3306/cfd
-      - TOP_INSTRUMENTS_URL=http://instruments:8083/api/v1/instruments/most-used
-      - INSTRUMENTS_URL=http://instruments:8083/api/v1/instruments-prices
-      - POSITIONS_URL=http://positions:8082/api/v1/users/
-      - BALANCE_URL=http://accountbalance:8085/api/v1/users/
+      - TOP_INSTRUMENTS_URL=http://cfdinstruments:8083/api/v1/instruments/most-used
+      - INSTRUMENTS_URL=http://cfdinstruments:8083/api/v1/instruments-prices
+      - POSITIONS_URL=http://accountpositions:8082/api/v1/users/
+      - BALANCE_URL=http://balances:8085/api/v1/users/
       - KAFKA_URL=kafka:9092
-    networks:
-      - backend
 
-  streaming-instance-2:
-    container_name: streaming-instance-2
+  streaming_instance-2:
+    container_name: streaming_instance-2
     build:
       dockerfile: compose/DockerFile_positions_streaming
     ports:
       - 8081:8080
     depends_on:
       - mariadb
-      - instruments
-      - positions
-      - accountbalance
+      - cfdinstruments
+      - accountpositions
+      - balances
       - kafka
     environment: 
       - DB_URL=jdbc:mariadb://mdb:3306/cfd
-      - TOP_INSTRUMENTS_URL=http://instruments:8083/api/v1/instruments/most-used
-      - INSTRUMENTS_URL=http://instruments:8083/api/v1/instruments-prices
-      - POSITIONS_URL=http://positions:8082/api/v1/users/
-      - BALANCE_URL=http://accountbalance:8085/api/v1/users/
+      - TOP_INSTRUMENTS_URL=http://cfdinstruments:8083/api/v1/instruments/most-used
+      - INSTRUMENTS_URL=http://cfdinstruments:8083/api/v1/instruments-prices
+      - POSITIONS_URL=http://accountpositions:8082/api/v1/users/
+      - BALANCE_URL=http://balances:8085/api/v1/users/
       - KAFKA_URL=kafka:9092
-    networks:
-      - backend
+    
+  streaming_instance-3:
+    container_name: streaming_instance-3
+    build:
+      dockerfile: compose/DockerFile_positions_streaming
+    ports:
+      - 8091:8080
+    depends_on:
+      - mariadb
+      - cfdinstruments
+      - accountpositions
+      - balances
+      - kafka
+    environment: 
+      - DB_URL=jdbc:mariadb://mdb:3306/cfd
+      - TOP_INSTRUMENTS_URL=http://cfdinstruments:8083/api/v1/instruments/most-used
+      - INSTRUMENTS_URL=http://cfdinstruments:8083/api/v1/instruments-prices
+      - POSITIONS_URL=http://accountpositions:8082/api/v1/users/
+      - BALANCE_URL=http://balances:8085/api/v1/users/
+      - KAFKA_URL=kafka:9092
 
-  accountbalance: 
-    container_name: accountbalance
+  balances:
+    container_name: balances
     build:
       dockerfile: compose/DockerFile_account_balance
     ports:
@@ -70,13 +84,11 @@ services:
     environment: 
       - DB_URL=jdbc:mariadb://mdb:3306/cfd
       - KAFKA_URL=kafka:9092
-    networks:
-      - backend
 
   auth: 
     container_name: auth
     build:
-      dockerfile: DockerFile_auth
+      dockerfile: compose/DockerFile_authentication
     ports:
       - 8084:8084
     depends_on:
@@ -85,11 +97,9 @@ services:
     environment: 
       - DB_URL=jdbc:mariadb://mdb:3306/cfd
       - KAFKA_URL=kafka:9092
-    networks:
-      - backend
 
-  instruments: 
-    container_name: instruments
+  cfdinstruments: 
+    container_name: cfdinstruments
     build:
       dockerfile: compose/DockerFile_instruments
     ports:
@@ -100,11 +110,9 @@ services:
     environment: 
       - DB_URL=jdbc:mariadb://mdb:3306/cfd
       - KAFKA_URL=kafka:9092
-    networks:
-      - backend
 
-  positions: 
-    container_name: positions
+  accountpositions: 
+    container_name: accountpositions
     build:
       dockerfile: compose/DockerFile_positions
     ports:
@@ -115,24 +123,20 @@ services:
     environment: 
       - DB_URL=jdbc:mariadb://mdb:3306/cfd
       - KAFKA_URL=kafka:9092
-    networks:
-      - backend
   
-  producer:
-    container_name: producer
+  quotescfd:
+    container_name: quotescfd
     build:
-      dockerfile: compose/DockerFile_producer
+      dockerfile: compose/DockerFile_quotes
     environment:
       - DB_URL=jdbc:mariadb://mdb:3306/cfd
       - KAFKA_URL=kafka:9092
-      - INSTRUMENTS_URL=http://instruments:8083/api/v1/instruments-prices
+      - INSTRUMENTS_URL=http://cfdinstruments:8083/api/v1/instruments-prices
     depends_on:
-      - instruments
+      - cfdinstruments
       - kafka
     ports:
       - 8090:8090
-    networks:
-      - backend
 
   zookeeper:
     image: bitnami/zookeeper:latest
@@ -141,8 +145,6 @@ services:
       ALLOW_ANONYMOUS_LOGIN: yes
     ports:
       - 2181:2181
-    networks:
-      - backend
 
   kafka:
     image: bitnami/kafka:latest
@@ -157,8 +159,6 @@ services:
       - 9092:9092
     depends_on:
       - zookeeper
-    networks:
-      - backend
   
   haproxy:
     image: haproxy:alpine
@@ -168,9 +168,3 @@ services:
       - "8404:8404"
     volumes:
       - ./haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
-    networks:
-      - backend
-  
-networks:
-  backend:
-    driver: bridge

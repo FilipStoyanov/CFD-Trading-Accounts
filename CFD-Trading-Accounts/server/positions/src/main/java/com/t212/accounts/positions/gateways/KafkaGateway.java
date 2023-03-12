@@ -2,6 +2,7 @@ package com.t212.accounts.positions.gateways;
 
 import com.t212.accounts.positions.lib.events.ClosePositionEvent;
 import com.t212.accounts.positions.lib.events.OpenPositionEvent;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.kafka.core.KafkaTemplate;
 
 public class KafkaGateway {
@@ -23,11 +24,11 @@ public class KafkaGateway {
         this.closePositionEvent = closePositionEvent;
     }
 
-    public void sendOpenPositionEvent(OpenPositionEvent positionsEvent) {
-        openPositionEvent.send(openPositionTopic, positionsEvent);
+    public void sendOpenPositionEvent(String key, OpenPositionEvent positionsEvent) {
+        openPositionEvent.send(new ProducerRecord<>(openPositionTopic, key, positionsEvent));
     }
 
-    public void sendClosePositionEvent(ClosePositionEvent positionsEvent) {
-        closePositionEvent.send(closePositionTopic, positionsEvent);
+    public void sendClosePositionEvent(String key, ClosePositionEvent positionsEvent) {
+        closePositionEvent.send(new ProducerRecord<>(closePositionTopic, key, positionsEvent));
     }
 }

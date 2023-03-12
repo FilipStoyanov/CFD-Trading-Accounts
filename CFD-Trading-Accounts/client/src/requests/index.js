@@ -5,9 +5,9 @@ const API_LOGIN_ENDPOINT = "http://localhost:8084/api/v1/login";
 const API_WEBSOCKET_ACCOUNT_BALANCE = "http://localhost:8085/api/v1/users/";
 const API_INSTRUMENTS = "http://localhost:8083/api/v1/instruments-prices";
 
-export const getInstrumentsWithPagination = (page, pageSize) => {
+export const getInstrumentsWithPagination = (page, pageSize, search="") => {
   return axios.get(
-    `${API_INSTRUMENTS}?page=${page}&pageSize=${pageSize}`,
+    `${API_INSTRUMENTS}?page=${page}&pageSize=${pageSize}&search=${search}`,
     {
       headers: {
         "Content-Type": "application/json",
@@ -65,9 +65,9 @@ export const closeMarketPosition = (position, userId) => {
   )
 }
 
-export const getInstrumentsWithOffset = (offset, rows) => {
+export const getInstrumentsWithOffset = (offset, rows, search="") => {
   return axios.get(
-    `${API_INSTRUMENTS}?offset=${offset}&rows=${rows}`,
+    `${API_INSTRUMENTS}?offset=${offset}&rows=${rows}&search=${search}`,
     {
       headers: {
         "Content-Type": "application/json",

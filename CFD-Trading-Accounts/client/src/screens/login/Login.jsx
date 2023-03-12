@@ -2,15 +2,13 @@ import React, { FC, useState, useEffect } from "react";
 import { Button, Grid, Paper, TextField, Typography } from "@mui/material";
 import { loginStyle, textFieldStyle } from "./LoginStyle";
 import { loginUser } from "../../requests";
-import { Link, useNavigate } from "react-router-dom";
-import { useCookies } from "react-cookie";
+import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { add } from "../../store/slices/userSlice";
 
 const Login = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const [cookies, setCookies] = useCookies();
   const defaultFormValues = {
     email: "",
     password: "",
@@ -74,7 +72,7 @@ const Login = () => {
         sx={loginStyle}
       >
         <Paper elevation={3} sx={styles.paper}>
-          <h1>Sign In</h1>
+          <Typography sx={{fontSize: "35px", fontWeight: "bold"}}>Sign In</Typography>
           <Grid container item justifyContent="center" xs={12} rowSpacing={0}>
             <form
               onSubmit={handleSubmit}
@@ -130,6 +128,11 @@ const styles = {
   button: {
     height: "50px",
     marginTop: "20px",
-    marginBottom: "20px"
+    marginBottom: "20px",
+    backgroundColor: "#00a7e1",
+    "&:hover": {
+      backgroundColor: "#dadbe2",
+      color: "#00a7e1"
+    }
   },
 };

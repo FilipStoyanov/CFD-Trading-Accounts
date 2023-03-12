@@ -1,6 +1,7 @@
 package com.t212.account.balance.gateways;
 
 import com.t212.account.balance.events.AccountBalanceUpdaterEvent;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.kafka.core.KafkaTemplate;
 
 public class KafkaGateway {
@@ -15,7 +16,9 @@ public class KafkaGateway {
         this.accountBalanceUpdatedEvent = accountBalanceUpdatedEvent;
     }
 
-    public void sendAccountBalanceUpdateEvent(AccountBalanceUpdaterEvent accountBalanceUpdaterEvent) {
-        accountBalanceUpdatedEvent.send(accountBalanceTopic, accountBalanceUpdaterEvent);
+    public void sendAccountBalanceUpdateEvent(String key, AccountBalanceUpdaterEvent accountBalanceUpdaterEvent) {
+        accountBalanceUpdatedEvent.send(new ProducerRecord<>(
+                accountBalanceTopic,
+                key, accountBalanceUpdaterEvent));
     }
 }

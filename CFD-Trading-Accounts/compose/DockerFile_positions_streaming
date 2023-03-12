@@ -1,4 +1,4 @@
 FROM openjdk:17
 EXPOSE 8080
-ADD /server/cfdaccounts/target/cfd_accounts.jar cfd_accounts.jar
+ADD /server/pplmargin/target/cfd_accounts.jar cfd_accounts.jar
 ENTRYPOINT ["java", "-jar", "cfd_accounts.jar", "--server-port=8080"]

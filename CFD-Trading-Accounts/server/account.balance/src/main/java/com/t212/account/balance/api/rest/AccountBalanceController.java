@@ -46,7 +46,7 @@ public class AccountBalanceController {
         try {
             AccountBalance accountBalance = accountBalanceService.withdraw(userId, balance.amount);
             AccountBalanceUpdaterEvent pEvent = new AccountBalanceUpdaterEvent(userId, accountBalance.balance(), System.currentTimeMillis());
-            kafkaGateway.sendAccountBalanceUpdateEvent(pEvent);
+            kafkaGateway.sendAccountBalanceUpdateEvent(String.valueOf(userId), pEvent);
             return ResponseEntity.status(200).body(new ApiResponse(200, "Successfully updated", accountBalance));
         } catch (DataAccessException e) {
             return ResponseEntity.status(404).body(new ApiResponse(404, "Not found"));
@@ -61,7 +61,7 @@ public class AccountBalanceController {
         try {
             AccountBalance accountBalance = accountBalanceService.deposit(userId, deposit.amount);
             AccountBalanceUpdaterEvent pEvent = new AccountBalanceUpdaterEvent(userId, accountBalance.balance(), System.currentTimeMillis());
-            kafkaGateway.sendAccountBalanceUpdateEvent(pEvent);
+            kafkaGateway.sendAccountBalanceUpdateEvent(String.valueOf(userId), pEvent);
             return ResponseEntity.status(200).body(new ApiResponse(200, "Successfully updated balance", accountBalance));
         } catch (DataAccessException e) {
             return ResponseEntity.status(404).body(new ApiResponse(404, "Not found"));

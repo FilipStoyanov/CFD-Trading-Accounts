@@ -1,4 +1,0 @@
-FROM openjdk:17
-EXPOSE 8090
-ADD /server/producer/target/quotes.jar quotes.jar
-ENTRYPOINT ["java", "-jar", "quotes.jar", "--server-port=8090"]

@@ -14,7 +14,7 @@ BEGIN
     		END  IF;
     		INSERT INTO
                   account_positions(user_id, instrument_id, quantity, type, buy_price, sell_price)
-                  VALUES (user_cnt, FLOOR(RAND()*13 + 1), FLOOR(RAND()*1000 + 1) , "LONG", RAND() * (500 - 100) + 100, FLOOR(RAND()*10 + 1));
+                  VALUES (user_cnt, FLOOR(RAND()*13 + 1), FLOOR(RAND()*10 + 1) , "LONG", RAND() * (200 - 100) + 100, FLOOR(RAND()*10 + 1));
             set user_cnt = user_cnt + 1;
             set cnt = cnt + 1;
     END LOOP;

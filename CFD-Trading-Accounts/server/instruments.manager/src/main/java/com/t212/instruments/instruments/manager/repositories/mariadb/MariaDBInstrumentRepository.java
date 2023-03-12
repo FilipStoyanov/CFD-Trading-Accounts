@@ -1,5 +1,6 @@
 package com.t212.instruments.instruments.manager.repositories.mariadb;
 
+import com.t212.instruments.instruments.manager.core.models.InstrumentUpdater;
 import com.t212.instruments.instruments.manager.core.models.InstrumentWithPrice;
 import com.t212.instruments.instruments.manager.repositories.InstrumentRepository;
 import com.t212.instruments.instruments.manager.repositories.models.InstrumentDAO;
@@ -7,6 +8,7 @@ import com.t212.instruments.instruments.manager.repositories.models.InstrumentWi
 import com.t212.instruments.instruments.manager.repositories.queries.InstrumentQueries;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
@@ -97,18 +99,36 @@ public class MariaDBInstrumentRepository implements InstrumentRepository {
     }
 
     @Override
-    public List<InstrumentWithPricesDAO> getPaginatedInstrumentsWithPrices(Integer page, Integer pageSize) {
-        return jdbc.query(InstrumentQueries.GET_INSTRUMENTS_WITH_PAGINATION, (rs, rowNum) -> fromResultSetToInstrumentWithPrices(rs), page*pageSize, pageSize);
+    public List<InstrumentWithPricesDAO> getPaginatedInstrumentsWithPrices(Integer page, Integer pageSize, String name) {
+        return jdbc.query(InstrumentQueries.GET_INSTRUMENTS_WITH_PAGINATION, (rs, rowNum) -> fromResultSetToInstrumentWithPrices(rs), name, page * pageSize, pageSize);
     }
 
     @Override
-    public List<InstrumentWithPricesDAO> getInstrumentsPricesWithOffset(Integer offset, Integer numberOfRows) {
-        return jdbc.query(InstrumentQueries.GET_INSTRUMENTS_WITH_PAGINATION, (rs, rowNum) -> fromResultSetToInstrumentWithPrices(rs), offset, numberOfRows);
+    public List<InstrumentWithPricesDAO> getInstrumentsPricesWithOffset(Integer offset, Integer numberOfRows, String name) {
+        return jdbc.query(InstrumentQueries.GET_INSTRUMENTS_WITH_PAGINATION, (rs, rowNum) -> fromResultSetToInstrumentWithPrices(rs), name, offset, numberOfRows);
     }
 
     @Override
     public long getTypeId(String type) throws EmptyResultDataAccessException {
         return jdbc.queryForObject(InstrumentQueries.GET_TYPE_ID, (rs, rowNum) -> rs.getLong("id"), type);
+    }
+
+    @Override
+    public void batchUpdate(List<InstrumentUpdater> instruments) {
+        String sql = "UPDATE instrument_prices SET buy = ?, sell = ? WHERE ticker = ?";
+        jdbc.batchUpdate(sql, new BatchPreparedStatementSetter() {
+            @Override
+            public void setValues(PreparedStatement ps, int i) throws SQLException {
+                ps.setBigDecimal(1, instruments.get(i).buy());
+                ps.setBigDecimal(2, instruments.get(i).sell());
+                ps.setString(3, instruments.get(i).ticker());
+            }
+
+            @Override
+            public int getBatchSize() {
+                return instruments.size();
+            }
+        });
     }
 
     private static InstrumentDAO fromResultSetToInstrument(ResultSet rs) throws SQLException {

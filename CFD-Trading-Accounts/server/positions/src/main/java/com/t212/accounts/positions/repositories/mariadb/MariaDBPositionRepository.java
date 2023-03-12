@@ -46,7 +46,7 @@ public class MariaDBPositionRepository implements AccountPositionRepository {
     }
 
     @Override
-    public AccountPositionDAO getOpenPositionById(long userId, long instrumentId, String type) {
+    public AccountPositionDAO getOpenPositionById(long userId, long instrumentId, String type) throws EmptyResultDataAccessException {
         return jdbc.queryForObject(PositionsQueries.GET_BY_INSTRUMENT_ID, (rs, rowNum) -> fromResultSetToPosition(rs), userId, instrumentId, type);
     }
 
@@ -57,7 +57,11 @@ public class MariaDBPositionRepository implements AccountPositionRepository {
 
     @Override
     public AccountPositionDAO addPositionToUser(long userId, long instrumentId, BigDecimal quantity, String type, BigDecimal buyPrice, BigDecimal sellPrice) {
-        jdbc.update(PositionsQueries.INSERT_POSITION, userId, instrumentId, quantity, type, buyPrice, sellPrice);
+        try {
+            AccountPositionDAO a = getOpenPositionById(userId, instrumentId, type);
+        } catch (EmptyResultDataAccessException e) {
+            jdbc.update(PositionsQueries.INSERT_POSITION, userId, instrumentId, quantity, type, buyPrice, sellPrice);
+        }
         return getOpenPositionById(userId, instrumentId, type);
     }
 
@@ -77,7 +81,8 @@ public class MariaDBPositionRepository implements AccountPositionRepository {
         );
     }
 
-    private static AccountPositionsWithPricesDAO fromResultSetToPositionWithPrices(ResultSet rs) throws SQLException {
+    private static AccountPositionsWithPricesDAO fromResultSetToPositionWithPrices(ResultSet rs) throws
+            SQLException {
         return new AccountPositionsWithPricesDAO(
                 rs.getInt("user_id"),
                 rs.getString("ticker"),

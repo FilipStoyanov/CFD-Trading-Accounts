@@ -11,9 +11,6 @@ public class GatewayBeans {
     @Value("${kafka.stock-prices-topic}")
     private String stockPriceUpdateTopic;
 
-    @Value("${kafka.stock-prices-topic-partitions}")
-    private Integer stockPriceUpdateTopicCnt;
-
     public GatewayBeans() {
     }
 
@@ -21,7 +18,7 @@ public class GatewayBeans {
     public KafkaGateway kafkaGateway(
             KafkaTemplate<String, StockPriceUpdateEvents> stockPriceUpdatePublisher) {
         return new KafkaGateway(
-                stockPriceUpdateTopic, stockPriceUpdateTopicCnt, stockPriceUpdatePublisher);
+                stockPriceUpdateTopic, stockPriceUpdatePublisher);
     }
 
 }

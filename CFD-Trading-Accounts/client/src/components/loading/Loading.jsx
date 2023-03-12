@@ -6,10 +6,10 @@ const Loading = () => {
   return (
     <Grid sx={styles.wrapper}>
       <Grid sx={styles.progress}>
-        <Typography color="white" variant="h3" mb={4}>
+        <Typography color="white" variant="h3" mb={4} fontFamily="Pacifica">
           Trading 212
         </Typography>
-        <LinearProgress />
+        <LinearProgress sx = {styles.loading} />
       </Grid>
     </Grid>
   );
@@ -32,6 +32,9 @@ const styles = {
     margin: "0 auto",
     top: "50%",
     height: "100px",
-    transform: "translate(0%, -50%)",
+    transform: "translate(0%, -60%)",
   },
+  loading: {
+    height: "6px"
+  }
 };

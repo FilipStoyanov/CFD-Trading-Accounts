@@ -1,7 +1,13 @@
-import { SvgIcon } from "@mui/joy";
-import { Typography, Grid, Image } from "@mui/material";
+import { Typography, Grid } from "@mui/material";
+import LogoutIcon from '@mui/icons-material/Logout';
 import React from "react";
+import { useNavigate } from "react-router-dom";
 const Header = ({ cash }) => {
+  const navigate = useNavigate();
+  const logout = () => {
+    localStorage.clear();
+    navigate("/login");
+  }
   return (
     <Grid container sx={styles.header} pl={3} justifyContent="space-between">
       <Grid item xs={4} lg={1}>
@@ -15,6 +21,10 @@ const Header = ({ cash }) => {
         <Grid item sx={{display: "flex"}}>
         <Typography sx={styles.account}>Hello, </Typography>
           <Typography pl={1} sx={styles.username}>filip</Typography>
+        </Grid>
+        <Grid item sx={{display: "flex"}}>
+        <LogoutIcon sx={{color: "#00a7e1", marginRight: "10px"}} onClick = {logout} />
+        <Typography sx={styles.logout} onClick = {logout}>Logout</Typography>
         </Grid>
       </Grid>
     </Grid>
@@ -33,11 +43,21 @@ const styles = {
   title: {
     fontSize: "24px",
     fontStyle: "normal",
+    color: "#00a7e1"
   },
   account: {
     fontSize: "15px",
     color: "#747980",
     fontWeight: "bold",
+  },
+  logout: {
+    fontSize: "15px",
+    color: "#747980",
+    fontWeight: "bold",
+    cursor: "pointer",
+    "&:hover": {
+      color: "#00a7e1"
+    }
   },
   amount: {
     fontSize: "15px",

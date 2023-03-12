@@ -1,5 +1,6 @@
 package com.t212.instruments.instruments.manager.repositories;
 
+import com.t212.instruments.instruments.manager.core.models.InstrumentUpdater;
 import com.t212.instruments.instruments.manager.core.models.InstrumentWithPrice;
 import com.t212.instruments.instruments.manager.repositories.models.InstrumentDAO;
 import com.t212.instruments.instruments.manager.repositories.models.InstrumentWithPricesDAO;
@@ -26,9 +27,11 @@ public interface InstrumentRepository {
 
     List<InstrumentWithPricesDAO> getTop10Instruments();
 
-    List<InstrumentWithPricesDAO> getInstrumentsPricesWithOffset(Integer offset, Integer numberOfRows);
+    List<InstrumentWithPricesDAO> getInstrumentsPricesWithOffset(Integer offset, Integer numberOfRows, String name);
 
-    List<InstrumentWithPricesDAO> getPaginatedInstrumentsWithPrices(Integer page, Integer pageSize);
+    List<InstrumentWithPricesDAO> getPaginatedInstrumentsWithPrices(Integer page, Integer pageSize, String name);
 
     long getTypeId(String type);
+
+    void batchUpdate(List<InstrumentUpdater> dataList);
 }

@@ -44,7 +44,8 @@ create table if not exists `instruments` (
     updated_at datetime default current_timestamp,
 	isDeleted boolean default false,
     constraint PK_INSTRUMENT primary key(id),
-    constraint FK_INSTRUMENT foreign key(type_id) references `instrument_type`(id) on delete cascade
+    constraint FK_INSTRUMENT foreign key(type_id) references `instrument_type`(id) on delete cascade,
+    index(`name`)
 );
 
 create table if not exists `account_positions` (

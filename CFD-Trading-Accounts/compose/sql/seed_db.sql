@@ -54,7 +54,7 @@ BEGIN
 
         INSERT INTO
           account_cash (user_id, balance)
-          VALUES (cnt, 300);
+          VALUES (cnt, 20000);
 
 		set  username_cnt = username_cnt + 1;
         set  email_cnt = email_cnt + 1;
@@ -120,15 +120,15 @@ BEGIN
 		IF  cnt > 13 THEN
 			LEAVE  loop_label;
 		END  IF;
-        SET name = ELT(name_cnt, "Crude-Oil-01March23", "Gold", "EUR/USD", "USD/JPY", "Tesla", "Apple", "Meta Platforms", "Netflix", "Amazon", "Alphabet(Class C)",
+        SET name = ELT(name_cnt, "Broadcom", "Gold", "EUR/USD", "USD/JPY", "Tesla", "Apple", "Meta Platforms", "Netflix", "Amazon", "Alphabet(Class C)",
         "Virgin Galactic","Smile Direct Club","Airbnb");
-        SET fullname = ELT(fullname_cnt, "Crude Oil expiring 01 March 2023", "Gold", "EUR/USD", "USD/JPY", "Tesla Inc.",
+        SET fullname = ELT(fullname_cnt, "Broadcom Inc.", "Gold", "EUR/USD", "USD/JPY", "Tesla Inc.",
         "Apple Inc", "Meta Platforms Inc.", "Netflix Inc.", "Amazon.com Inc", "Alphabet Inc", "Virgin Galactic Holdings,Inc.", "Smile Direct Club, Inc.",
         "Airbnb Inc.");
         SET market_name = ELT(market_name_cnt, "Commodities", "Commodities", "Forex", "Forex", "NASDAQ", "NASDAQ", "NASDAQ", "NASDAQ", "NASDAQ", "NASDAQ", "NYSE","NASDAQ", "NASDAQ");
-        SET min_quantity = ELT(min_quantity_cnt, 0.1, 0.1, 500, 500, 0.1, 0.1, 0.1, 0.1, 0.2, 0.1, 0.1, 0.1, 0.1);
+        SET min_quantity = ELT(min_quantity_cnt, 2, 1, 10, 7, 5, 4, 0.1, 0.1, 0.2, 2, 3, 0.1, 0.1);
         SET leverage = ELT(leverage_cnt, 0.1, 0.05, 0.333, 0.333, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2);
-        SET ticker = ELT(ticker_cnt, "Crude-Oil-01March23", "Gold", "EUR/USD", "USD/JPY", "Tesla", "Apple", "Meta Platforms","Netflix", "Amazon", "Alphabet(Class C)", "Virgin Galactic",
+        SET ticker = ELT(ticker_cnt, "Broadcom", "Gold", "EUR/USD", "USD/JPY", "Tesla", "Apple", "Meta Platforms","Netflix", "Amazon", "Alphabet(Class C)", "Virgin Galactic",
         "Smile Direct Club", "Airbnb Inc");
         INSERT INTO
           `instruments` (name, fullname, ticker, market_name, type_id, min_quantity, leverage)
@@ -136,7 +136,7 @@ BEGIN
 
         INSERT INTO
           `instrument_prices` (ticker, buy, sell)
-          VALUES (ticker, RAND() * (500 - 50) + 50, RAND() * (500 - 50) + 50);
+          VALUES (ticker, RAND() * (193 - 188) + 188, RAND() * (193 - 188) + 188);
 
 		set  name_cnt = name_cnt + 1;
         set  fullname_cnt = fullname_cnt + 1;

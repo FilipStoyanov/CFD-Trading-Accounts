@@ -43,6 +43,7 @@ public class PositionController {
             return ResponseEntity.status(404).body(new ApiResponse(404, "Not found open positions"));
         }
     }
+
     @GetMapping(value = "{id}/open-positions")
     public ResponseEntity<ApiResponse> listOpenPositionsWithCurrentPrices(@PathVariable("id") long id) {
         if (id <= 0) {
@@ -77,7 +78,8 @@ public class PositionController {
         try {
             Position updatedPosition = positionsService.updatePosition(userId, positionUpdate.ticker(), positionUpdate.positionType());
             ClosePositionEvent pEvent = new ClosePositionEvent(userId, updatedPosition.ticker, positionUpdate.positionType(), positionUpdate.quantity(), positionUpdate.buyPrice(), positionUpdate.sellPrice(), System.currentTimeMillis());
-            kafkaGateway.sendClosePositionEvent(pEvent);
+            String key = userId + updatedPosition.ticker + updatedPosition.type;
+            kafkaGateway.sendClosePositionEvent(key, pEvent);
             return ResponseEntity.status(200).body(new ApiResponse(200, "Successfully updated", updatedPosition));
         } catch (DataAccessException e) {
             return ResponseEntity.status(400).body(new ApiResponse(400, "Not successfully updated"));
@@ -92,7 +94,8 @@ public class PositionController {
         try {
             Position newPosition = positionsService.addPosition(userId, position.instrumentId(), position.quantity(), position.type(), position.buyPrice(), position.sellPrice());
             OpenPositionEvent pEvent = new OpenPositionEvent(userId, newPosition.ticker, position.type(), position.quantity(), position.buyPrice(), position.sellPrice(), System.currentTimeMillis());
-            kafkaGateway.sendOpenPositionEvent(pEvent);
+            String key = userId + newPosition.ticker + newPosition.type;
+            kafkaGateway.sendOpenPositionEvent(key, pEvent);
             return ResponseEntity.status(200).body(new ApiResponse(200, "Successfully created", newPosition));
         } catch (DataAccessException e) {
             return ResponseEntity.status(400).body(new ApiResponse(400, "Not successfully created"));

@@ -7,7 +7,6 @@ import java.math.BigDecimal;
 
 public class BalanceInput {
     public BigDecimal amount;
-
     @JsonCreator
     public BalanceInput(@JsonProperty("amount") BigDecimal amount) {
         this.amount = amount;

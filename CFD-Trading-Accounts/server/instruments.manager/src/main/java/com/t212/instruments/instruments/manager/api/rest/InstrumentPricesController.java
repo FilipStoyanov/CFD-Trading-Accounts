@@ -21,17 +21,21 @@ public class InstrumentPricesController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse> getInstrumentsWithQuotes(@RequestParam("page") Optional<Integer> page, @RequestParam("pageSize") Optional<Integer> pageSize, @RequestParam("offset") Optional<Integer> offset, @RequestParam("rows") Optional<Integer> rows) {
+    public ResponseEntity<ApiResponse> getInstrumentsWithQuotes(@RequestParam("page") Optional<Integer> page, @RequestParam("pageSize") Optional<Integer> pageSize, @RequestParam("offset") Optional<Integer> offset, @RequestParam("rows") Optional<Integer> rows, @RequestParam("search") Optional<String> instrumentName) {
         if ((page.isPresent() && page.get() < 0) || (page.isPresent() && pageSize.get() < 0)) {
             return ResponseEntity.status(400).body(new ApiResponse(400, "Invalid parameters"));
         }
-        if (!page.isPresent() && !pageSize.isPresent() && !offset.isPresent() && !rows.isPresent()) {
+        if (!page.isPresent() && !pageSize.isPresent() && !offset.isPresent() && !rows.isPresent() && !instrumentName.isPresent()) {
             List<InstrumentWithPrice> instruments = instrumentService.getInstrumentsWithPrices();
             return ResponseEntity.status(200).body(new ApiResponse(200, "", instruments));
         }
+        String name = "%%";
+        if (instrumentName.isPresent()) {
+            name = "%" + instrumentName.get() + "%";
+        }
         if (page.isPresent() && pageSize.isPresent()) {
             try {
-                List<InstrumentWithPrice> instruments = instrumentService.getPaginatedInstrumentsWithPrices(page.get(), pageSize.get());
+                List<InstrumentWithPrice> instruments = instrumentService.getPaginatedInstrumentsWithPrices(page.get(), pageSize.get(), name);
                 return ResponseEntity.status(200).body(new ApiResponse(200, "", instruments));
             } catch (EmptyResultDataAccessException e) {
                 return ResponseEntity.status(400).body(new ApiResponse(400, "An error has occurred"));
@@ -39,7 +43,7 @@ public class InstrumentPricesController {
         }
         if (offset.isPresent() && rows.isPresent()) {
             try {
-                List<InstrumentWithPrice> instruments = instrumentService.getInstrumentsPricesWithOffset(offset.get(), rows.get());
+                List<InstrumentWithPrice> instruments = instrumentService.getInstrumentsPricesWithOffset(offset.get(), rows.get(), name);
                 return ResponseEntity.status(200).body(new ApiResponse(200, "", instruments));
             } catch (EmptyResultDataAccessException e) {
                 return ResponseEntity.status(400).body(new ApiResponse(400, "An error has occurred"));
